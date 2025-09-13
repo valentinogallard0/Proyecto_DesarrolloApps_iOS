@@ -5,16 +5,53 @@
 //  Created by Valentino De Paola Gallardo on 02/09/25.
 //
 import SwiftUI
+import MapKit
+
+// Modelo de bache
+struct Bache: Identifiable {
+    let id = UUID()
+    let descripcion: String
+    let ubicacion: CLLocationCoordinate2D
+}
+
+// Datos de prueba
+let baches = [
+    Bache(descripcion: "Bache grande en avenida", ubicacion: CLLocationCoordinate2D(latitude: 19.4326, longitude: -99.1332)),
+    Bache(descripcion: "Pequeño pero peligroso", ubicacion: CLLocationCoordinate2D(latitude: 19.434, longitude: -99.135))
+]
+
+// Vista del pin en el mapa
+struct BachePinView: View {
+    let bache: Bache
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            Image(systemName: "mappin.circle.fill")
+                .font(.title)
+                .foregroundColor(.red)
+            Text(bache.descripcion)
+                .font(.caption2)
+                .foregroundColor(.black)
+                .padding(4)
+                .background(Color.white.opacity(0.8))
+                .cornerRadius(6)
+        }
+    }
+}
 
 struct HomeView: View {
     
     @State private var searchText: String = ""
-    
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 19.4326, longitude: -99.1332),
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    )
+
     var body: some View {
         ScrollView {
             VStack(spacing: 28) {
                 
-                // Barra de búsqueda con botón
+                // 🔎 Barra de búsqueda
                 HStack(spacing: 12) {
                     HStack {
                         Image(systemName: "magnifyingglass")
@@ -42,16 +79,21 @@ struct HomeView: View {
                 }
                 .padding(.horizontal)
 
-                // Mapa ilustrativo
-                Image("map")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .cornerRadius(20)
-                    .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
-                    .padding(.horizontal)
+                Map(initialPosition: .region(region)) {
+                    ForEach(baches) { bache in
+                        Annotation(bache.descripcion, coordinate: bache.ubicacion) {
+                            BachePinView(bache: bache)
+                        }
+                    }
+                }
+                .frame(height: 300)
 
-                // Tarjeta de calidad del aire
+                .frame(height: 300)
+                .cornerRadius(20)
+                .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 3)
+                .padding(.horizontal)
+
+                // 🍃 Tarjeta de calidad del aire
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Calidad del Aire")
                         .font(.title)
@@ -76,12 +118,18 @@ struct HomeView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(LinearGradient(gradient: Gradient(colors: [Color.green, Color.green.opacity(0.8)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.8)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .cornerRadius(20)
                 .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 3)
                 .padding(.horizontal)
 
-                // Botón para subir reporte
+                // ⬆️ Botón para subir reporte
                 Button(action: {
                     // Acción para subir reporte
                 }) {
