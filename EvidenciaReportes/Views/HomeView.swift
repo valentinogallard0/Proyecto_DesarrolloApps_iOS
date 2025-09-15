@@ -9,56 +9,8 @@ import CoreLocation
 import MapKit
 
 // MARK: - Models
-enum ReportType: String, CaseIterable, Identifiable {
-    case pothole = "Bache"
-    case streetlight = "Luminaria"
-    case waterLeak = "Fuga de agua"
-    var id: String { rawValue }
-    
-    var icon: String {
-        switch self {
-        case .pothole: return "exclamationmark.triangle"
-        case .streetlight: return "lightbulb"
-        case .waterLeak: return "drop"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .pothole: return .orange
-        case .streetlight: return .yellow
-        case .waterLeak: return .teal
-        }
-    }
-}
-
-struct Report: Identifiable {
-    let id = UUID()
-    let type: ReportType
-    let title: String
-    let subtitle: String
-    let date: Date
-    let coordinate: CLLocationCoordinate2D?
-}
-
-struct AQIReading {
-    var aqi: Int
-    var label: String
-    var advice: String
-    var color: Color
-}
 
 // MARK: - ViewModel (Mock Data)
-@MainActor
-final class HomeViewModel: ObservableObject {
-    @Published var userLocation: CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
-    @Published var aqi: AQIReading? = AQIReading(aqi: 42, label: "Bueno", advice: "Aire en buen estado", color: .green)
-    @Published var recentReports: [Report] = [
-        Report(type: .pothole, title: "Bache grande", subtitle: "Av. Constitución #123", date: .now.addingTimeInterval(-3600), coordinate: nil),
-        Report(type: .streetlight, title: "Luminaria fundida", subtitle: "Parque Fundidora", date: .now.addingTimeInterval(-7200), coordinate: nil),
-        Report(type: .waterLeak, title: "Fuga visible", subtitle: "Col. Centro", date: .now.addingTimeInterval(-10800), coordinate: nil)
-    ]
-}
 
 // MARK: - Main Screen
 struct HomeView: View {
@@ -287,7 +239,6 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             HomeView()
-            HomeView().preferredColorScheme(.dark)
         }
     }
 }
