@@ -16,6 +16,7 @@ import SwiftUI
 import MapKit
 
 struct AutoridadesView: View {
+    @EnvironmentObject private var store: ReportsStore
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161),
         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
@@ -23,25 +24,9 @@ struct AutoridadesView: View {
     
     @State private var filter: ReportStatus? = nil
     
-    // Datos de prueba usando el modelo unificado `Report`
-    private var sampleReports: [Report] = [
-        Report(type: .pothole, title: "Bache profundo en Av. Constitución", subtitle: "Mty Centro",
-               date: .now.addingTimeInterval(-600),
-               coordinate: CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161),
-               status: .new),
-        Report(type: .pothole, title: "Bache pequeño en Insurgentes", subtitle: "Zona Valle",
-               date: .now.addingTimeInterval(-3600),
-               coordinate: CLLocationCoordinate2D(latitude: 25.66, longitude: -100.35),
-               status: .inProgress),
-        Report(type: .streetlight, title: "Luminaria reparada en Col. Roma", subtitle: "Calle Principal",
-               date: .now.addingTimeInterval(-7200),
-               coordinate: CLLocationCoordinate2D(latitude: 25.70, longitude: -100.30),
-               status: .resolved)
-    ]
-    
     private var filtered: [Report] {
-        guard let f = filter else { return sampleReports }
-        return sampleReports.filter { $0.status == f }
+        guard let f = filter else { return store.reports }
+        return store.reports.filter { $0.status == f }
     }
     
     var body: some View {
@@ -52,17 +37,7 @@ struct AutoridadesView: View {
                     ForEach(filtered) { report in
                         if let coord = report.coordinate {
                             Annotation(report.title, coordinate: coord) {
-                                VStack {
-                                    Circle()
-                                        .fill(report.status.color)
-                                        .frame(width: 28, height: 28)
-                                    Text(report.status.rawValue)
-                                        .font(.caption2)
-                                        .foregroundColor(.white)
-                                        .padding(4)
-                                        .background(report.status.color.opacity(0.8))
-                                        .cornerRadius(6)
-                                }
+                                ReportAnnotationView(report: report, showsTitle: true)
                             }
                         }
                     }
@@ -128,3 +103,4 @@ struct AutoridadesView: View {
 #Preview {
     AutoridadesView()
 }
+

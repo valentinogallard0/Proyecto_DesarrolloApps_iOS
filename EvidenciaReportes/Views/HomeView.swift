@@ -14,8 +14,10 @@ import MapKit
 
 // MARK: - Main Screen
 struct HomeView: View {
+    @EnvironmentObject private var store: ReportsStore
     @StateObject private var vm = HomeViewModel()
     @State private var selectedType: ReportType? = nil
+    @State private var goToMap = false
     
     var body: some View {
         NavigationStack {
@@ -32,7 +34,9 @@ struct HomeView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("")
-            .toolbar { ToolbarItem(placement: .principal) { titleBar } }
+            .toolbar {
+                ToolbarItem(placement: .principal) { titleBar }
+            }
         }
     }
     
@@ -139,25 +143,22 @@ struct HomeView: View {
         }
     }
     
+    // 🔁 REEMPLAZADO: ahora es un minimapa real
     private var mapPreview: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Cerca de ti")
                 .font(.headline)
-            ZStack(alignment: .bottomTrailing) {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(LinearGradient(colors: [.blue.opacity(0.2), .green.opacity(0.15)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(height: 160)
-                // Placeholder del mapa. Sustituir con Map si quieres mapa real en esta fase.
-                
-                HStack(spacing: 6) {
-                    Image(systemName: "map")
-                    Text("Abrir mapa")
+            
+            let center = vm.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
+            
+            NavigationLink(isActive: $goToMap) {
+                MapReportsView(reports: $store.reports)
+            } label: {
+                MiniMapView(center: center, reports: store.reports) {
+                    goToMap = true
                 }
-                .font(.subheadline)
-                .padding(10)
-                .background(.ultraThinMaterial, in: Capsule())
-                .padding(12)
             }
+            .buttonStyle(.plain)
         }
     }
     
@@ -181,6 +182,7 @@ struct HomeView: View {
         }
     }
 }
+
 
 // MARK: - Components
 struct ReportRow: View {
@@ -234,6 +236,7 @@ struct ReportRow: View {
     }
 }
 
+
 // MARK: - Preview
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
@@ -242,3 +245,4 @@ struct HomeView_Previews: PreviewProvider {
         }
     }
 }
+
