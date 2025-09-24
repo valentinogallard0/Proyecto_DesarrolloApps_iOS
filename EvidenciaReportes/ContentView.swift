@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var store: ReportsStore
+    
     var body: some View {
         TabView {
             NavigationStack { HomeView() }
@@ -15,6 +17,9 @@ struct ContentView: View {
 
             NavigationStack { AutoridadesView() }
                 .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
+
+            NavigationStack { MapReportsView(reports: $store.reports) }
+                .tabItem { Label("Mapa", systemImage: "map") }
 
             NavigationStack { Text("Perfil (próximamente)") }
                 .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
@@ -26,3 +31,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
