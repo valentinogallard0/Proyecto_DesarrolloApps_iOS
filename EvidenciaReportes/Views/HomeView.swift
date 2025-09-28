@@ -18,6 +18,7 @@ struct HomeView: View {
     @StateObject private var vm = HomeViewModel()
     @State private var selectedType: ReportType? = nil
     @State private var goToMap = false
+    @State private var showAddSheet = false
     
     var body: some View {
         NavigationStack {
@@ -36,6 +37,12 @@ struct HomeView: View {
             .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) { titleBar }
+            }
+            .sheet(isPresented: $showAddSheet) {
+                let center = vm.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
+                AddReportView(center: center, initialType: selectedType) { newReport in
+                    store.reports.append(newReport)
+                }
             }
         }
     }
@@ -121,7 +128,10 @@ struct HomeView: View {
                 .font(.headline)
             HStack(spacing: 12) {
                 ForEach(ReportType.allCases) { type in
-                    Button { selectedType = type } label: {
+                    Button {
+                        selectedType = type
+                        showAddSheet = true
+                    } label: {
                         VStack(spacing: 8) {
                             Image(systemName: type.icon)
                                 .font(.title2)
@@ -241,7 +251,8 @@ struct ReportRow: View {
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            HomeView()
+            NavigationStack { HomeView() }
+                .environmentObject(ReportsStore())
         }
     }
 }

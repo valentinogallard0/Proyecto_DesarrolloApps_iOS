@@ -19,6 +19,12 @@ struct AddReportView: View {
     @State private var subtitleText: String = ""
     @State private var status: ReportStatus = .new
     
+    init(center: CLLocationCoordinate2D, initialType: ReportType? = nil, onSave: @escaping (Report) -> Void) {
+        self.center = center
+        self.onSave = onSave
+        _type = State(initialValue: initialType ?? .pothole)
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -70,3 +76,4 @@ struct AddReportView: View {
         }
     }
 }
+
