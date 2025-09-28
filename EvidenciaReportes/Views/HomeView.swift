@@ -20,6 +20,14 @@ struct HomeView: View {
     @State private var goToMap = false
     @State private var showAddSheet = false
     
+    private var recentFromStore: [Report] {
+        Array(
+            store.reports
+                .sorted(by: { $0.date > $1.date })
+                .prefix(5)
+        )
+    }
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -185,7 +193,7 @@ struct HomeView: View {
             }
             
             VStack(spacing: 10) {
-                ForEach(vm.recentReports) { report in
+                ForEach(recentFromStore) { report in
                     ReportRow(report: report)
                 }
             }
