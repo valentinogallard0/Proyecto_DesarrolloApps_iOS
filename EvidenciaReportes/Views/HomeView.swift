@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var selectedType: ReportType? = nil
     @State private var goToMap = false
     @State private var showAddSheet = false
+    @State private var showAllReportsSheet = false
     
     private var recentFromStore: [Report] {
         Array(
@@ -51,6 +52,9 @@ struct HomeView: View {
                 AddReportView(center: center, initialType: selectedType) { newReport in
                     store.reports.append(newReport)
                 }
+            }
+            .sheet(isPresented: $showAllReportsSheet) {
+                AllReportsSheet(reports: store.reports)
             }
         }
     }
@@ -187,7 +191,7 @@ struct HomeView: View {
                     .font(.headline)
                 Spacer()
                 Button("Ver todo") {
-                    // Acción: navegar a lista completa
+                    showAllReportsSheet = true
                 }
                 .font(.subheadline)
             }
