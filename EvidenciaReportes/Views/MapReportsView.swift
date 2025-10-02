@@ -20,7 +20,6 @@ struct MapReportsView: View {
     )
     
     @State private var showAdd = false
-    @State private var selectedReportID: UUID? = nil
     @State private var selectedReport: Report? = nil
     @State private var selectedCluster: ReportCluster? = nil
     @State private var selectedType: ReportType? = nil
@@ -90,12 +89,11 @@ struct MapReportsView: View {
                     if cluster.reports.count == 1, let report = cluster.reports.first {
                         Button(action: {
                             selectedReport = report
-                            selectedReportID = report.id
                             if let coord = report.coordinate {
                                 withAnimation { region.center = coord }
                             }
                         }) {
-                            ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
+                            ReportAnnotationView(report: report, showsTitle: false)
                         }
                         .buttonStyle(.plain)
                     } else {
@@ -312,4 +310,3 @@ private struct FilterChip: View {
         MapReportsView(reports: .constant(store.reports))
     }
 }
-
