@@ -21,6 +21,7 @@ struct MapReportsView: View {
     
     @State private var showAdd = false
     @State private var selectedReportID: UUID? = nil
+    @State private var selectedReport: Report? = nil
     
     private let minDelta: CLLocationDegrees = 0.002
     private let maxDelta: CLLocationDegrees = 1.5
@@ -46,10 +47,10 @@ struct MapReportsView: View {
             ) { report in
                 MapAnnotation(coordinate: report.coordinate!) {
                     Button(action: {
-                        if selectedReportID == report.id {
-                            selectedReportID = nil
-                        } else {
-                            selectedReportID = report.id
+                        selectedReport = report
+                        selectedReportID = report.id
+                        if let coord = report.coordinate {
+                            withAnimation { region.center = coord }
                         }
                     }) {
                         ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
@@ -94,6 +95,11 @@ struct MapReportsView: View {
             AddReportView(center: region.center) { newReport in
                 reports.append(newReport)
             }
+        }
+        .sheet(item: $selectedReport) { report in
+            ReportDetailView(report: report)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
