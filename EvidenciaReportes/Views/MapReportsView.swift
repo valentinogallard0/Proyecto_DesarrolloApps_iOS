@@ -23,6 +23,7 @@ struct MapReportsView: View {
     @State private var selectedReportID: UUID? = nil
     @State private var selectedReport: Report? = nil
     @State private var selectedCluster: ReportCluster? = nil
+    @State private var selectedType: ReportType? = nil
     @State private var clusters: [ReportCluster] = []
     
     private let minDelta: CLLocationDegrees = 0.002
@@ -38,6 +39,14 @@ struct MapReportsView: View {
     
     private var reportsWithCoords: [Report] {
         reports.filter { $0.coordinate != nil }
+    }
+    
+    private var filteredReports: [Report] {
+        if let t = selectedType {
+            return reports.filter { $0.type == t }
+        } else {
+            return reports
+        }
     }
     
     private func makeClusters(from reports: [Report], in region: MKCoordinateRegion) -> [ReportCluster] {
@@ -103,6 +112,25 @@ struct MapReportsView: View {
             .ignoresSafeArea()
             
             VStack {
+                // Top filter chips
+                HStack {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            FilterChip(title: "Todos", isSelected: selectedType == nil, color: .blue) {
+                                selectedType = nil
+                            }
+                            ForEach(ReportType.allCases) { type in
+                                FilterChip(title: type.rawValue, isSelected: selectedType == type, color: type.color) {
+                                    selectedType = type
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                    }
+                }
+                .padding(.top, 12)
+                .padding(.horizontal)
                 
                 Spacer()
                 
@@ -112,17 +140,20 @@ struct MapReportsView: View {
                     VStack(spacing: 10) {
                         Button(action: { showAdd = true }) {
                             Image(systemName: "plus")
+                                .foregroundColor(.black)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         Button(action: { zoom(true) }) {
                             Image(systemName: "plus.magnifyingglass")
+                                .foregroundColor(.black)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         
                         Button(action: { zoom(false) }) {
                             Image(systemName: "minus.magnifyingglass")
+                                .foregroundColor(.black)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
@@ -133,18 +164,20 @@ struct MapReportsView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            clusters = makeClusters(from: reports, in: region)
+            clusters = makeClusters(from: filteredReports, in: region)
         }
         .onChange(of: region.center) { _ in
-            clusters = makeClusters(from: reports, in: region)
+            clusters = makeClusters(from: filteredReports, in: region)
         }
         .onChange(of: region.span.latitudeDelta) { _ in
-            clusters = makeClusters(from: reports, in: region)
+            clusters = makeClusters(from: filteredReports, in: region)
         }
         .onChange(of: reports.map(\.id)) { _ in
-            clusters = makeClusters(from: reports, in: region)
+            clusters = makeClusters(from: filteredReports, in: region)
         }
-
+        .onChange(of: selectedType) { _ in
+            clusters = makeClusters(from: filteredReports, in: region)
+        }
         .sheet(isPresented: $showAdd) {
             AddReportView(center: region.center) { newReport in
                 reports.append(newReport)
@@ -251,6 +284,25 @@ private struct ClusterReportsList: View {
         let df = RelativeDateTimeFormatter()
         df.unitsStyle = .short
         return df.localizedString(for: date, relativeTo: .now)
+    }
+}
+
+private struct FilterChip: View {
+    let title: String
+    let isSelected: Bool
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? color : Color.secondary.opacity(0.15), in: Capsule())
+                .foregroundStyle(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
     }
 }
 
