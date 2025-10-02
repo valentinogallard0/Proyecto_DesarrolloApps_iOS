@@ -20,6 +20,7 @@ struct MapReportsView: View {
     )
     
     @State private var showAdd = false
+    @State private var selectedReportID: UUID? = nil
     
     private let minDelta: CLLocationDegrees = 0.002
     private let maxDelta: CLLocationDegrees = 1.5
@@ -44,7 +45,16 @@ struct MapReportsView: View {
                 annotationItems: reportsWithCoords
             ) { report in
                 MapAnnotation(coordinate: report.coordinate!) {
-                    ReportAnnotationView(report: report, showsTitle: true)
+                    Button(action: {
+                        if selectedReportID == report.id {
+                            selectedReportID = nil
+                        } else {
+                            selectedReportID = report.id
+                        }
+                    }) {
+                        ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .ignoresSafeArea()
