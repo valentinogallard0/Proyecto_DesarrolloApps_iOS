@@ -22,6 +22,8 @@ struct MapReportsView: View {
     @State private var showAdd = false
     @State private var selectedReportID: UUID? = nil
     @State private var selectedReport: Report? = nil
+    @State private var selectedCluster: ReportCluster? = nil
+    @State private var clusters: [ReportCluster] = []
     
     private let minDelta: CLLocationDegrees = 0.002
     private let maxDelta: CLLocationDegrees = 1.5
@@ -38,24 +40,64 @@ struct MapReportsView: View {
         reports.filter { $0.coordinate != nil }
     }
     
+    private func makeClusters(from reports: [Report], in region: MKCoordinateRegion) -> [ReportCluster] {
+        let items = reports.compactMap { r -> (Report, CLLocationCoordinate2D)? in
+            guard let c = r.coordinate else { return nil }
+            return (r, c)
+        }
+        guard !items.isEmpty else { return [] }
+        let bucket = max(region.span.latitudeDelta, region.span.longitudeDelta) / 20.0
+        if bucket <= 0 {
+            return items.map { (r, c) in
+                ReportCluster(id: "\(r.id)", coordinate: c, reports: [r])
+            }
+        }
+        var groups: [String: [(Report, CLLocationCoordinate2D)]] = [:]
+        for (r, c) in items {
+            let latKey = Int(floor(c.latitude / bucket))
+            let lonKey = Int(floor(c.longitude / bucket))
+            let key = "\(latKey)_\(lonKey)"
+            groups[key, default: []].append((r, c))
+        }
+        return groups.map { (key, group) in
+            let coords = group.map { $0.1 }
+            let avgLat = coords.map { $0.latitude }.reduce(0, +) / Double(coords.count)
+            let avgLon = coords.map { $0.longitude }.reduce(0, +) / Double(coords.count)
+            return ReportCluster(
+                id: key,
+                coordinate: CLLocationCoordinate2D(latitude: avgLat, longitude: avgLon),
+                reports: group.map { $0.0 }
+            )
+        }
+    }
+    
     var body: some View {
         ZStack {
-            // ✅ Usamos el overload con annotationItems + MapAnnotation (conforma a MapAnnotationProtocol)
             Map(coordinateRegion: $region,
                 interactionModes: [.all],
-                annotationItems: reportsWithCoords
-            ) { report in
-                MapAnnotation(coordinate: report.coordinate!) {
-                    Button(action: {
-                        selectedReport = report
-                        selectedReportID = report.id
-                        if let coord = report.coordinate {
-                            withAnimation { region.center = coord }
+                annotationItems: clusters
+            ) { cluster in
+                MapAnnotation(coordinate: cluster.coordinate) {
+                    if cluster.reports.count == 1, let report = cluster.reports.first {
+                        Button(action: {
+                            selectedReport = report
+                            selectedReportID = report.id
+                            if let coord = report.coordinate {
+                                withAnimation { region.center = coord }
+                            }
+                        }) {
+                            ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
                         }
-                    }) {
-                        ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
+                        .buttonStyle(.plain)
+                    } else {
+                        Button(action: {
+                            selectedCluster = cluster
+                            withAnimation { region.center = cluster.coordinate }
+                        }) {
+                            ClusterAnnotationView(count: cluster.reports.count)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .ignoresSafeArea()
@@ -90,6 +132,18 @@ struct MapReportsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            clusters = makeClusters(from: reports, in: region)
+        }
+        .onChange(of: region.center) { _ in
+            clusters = makeClusters(from: reports, in: region)
+        }
+        .onChange(of: region.span.latitudeDelta) { _ in
+            clusters = makeClusters(from: reports, in: region)
+        }
+        .onChange(of: reports.map(\.id)) { _ in
+            clusters = makeClusters(from: reports, in: region)
+        }
 
         .sheet(isPresented: $showAdd) {
             AddReportView(center: region.center) { newReport in
@@ -101,9 +155,104 @@ struct MapReportsView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(item: $selectedCluster) { cluster in
+            ClusterReportsList(cluster: cluster)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
+private struct ReportCluster: Identifiable {
+    let id: String
+    let coordinate: CLLocationCoordinate2D
+    let reports: [Report]
+}
+
+private struct ClusterAnnotationView: View {
+    let count: Int
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue)
+                .frame(width: 30, height: 30)
+                .shadow(color: Color.blue.opacity(0.25), radius: 3, x: 0, y: 1)
+            Circle()
+                .stroke(.white, lineWidth: 2)
+                .frame(width: 30, height: 30)
+            Text("\(count)")
+                .font(.caption2).bold()
+                .foregroundStyle(.white)
+        }
+    }
+}
+
+private struct ClusterReportsList: View {
+    let cluster: ReportCluster
+    @Environment(\.dismiss) private var dismiss
+    
+    private var sortedReports: [Report] {
+        cluster.reports.sorted { $0.date > $1.date }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            List(sortedReports) { report in
+                NavigationLink {
+                    ReportDetailView(report: report)
+                } label: {
+                    HStack(alignment: .top, spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(report.type.color.opacity(0.15))
+                            Image(systemName: report.type.icon)
+                                .foregroundStyle(report.type.color)
+                        }
+                        .frame(width: 44, height: 44)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(report.title).bold()
+                                Spacer()
+                                Text(relative(report.date))
+                                    .foregroundStyle(.secondary)
+                                    .font(.caption)
+                            }
+                            if !report.subtitle.isEmpty {
+                                Text(report.subtitle)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                            }
+                            HStack {
+                                Text(report.status.rawValue)
+                                    .font(.caption).bold()
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(report.status.color.opacity(0.15), in: Capsule())
+                                    .foregroundStyle(report.status.color)
+                                Spacer()
+                            }
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+            }
+            .navigationTitle("Reportes en esta zona")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cerrar") { dismiss() }
+                }
+            }
+        }
+    }
+    
+    private func relative(_ date: Date) -> String {
+        let df = RelativeDateTimeFormatter()
+        df.unitsStyle = .short
+        return df.localizedString(for: date, relativeTo: .now)
+    }
+}
 
 #Preview {
     let store = ReportsStore()
