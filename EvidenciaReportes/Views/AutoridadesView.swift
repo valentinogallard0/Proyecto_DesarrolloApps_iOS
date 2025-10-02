@@ -23,6 +23,7 @@ struct AutoridadesView: View {
     )
     
     @State private var filter: ReportStatus? = nil
+    @State private var selectedReportID: UUID? = nil
     
     private var filtered: [Report] {
         guard let f = filter else { return store.reports }
@@ -36,8 +37,17 @@ struct AutoridadesView: View {
                 Map(initialPosition: .region(region)) {
                     ForEach(filtered) { report in
                         if let coord = report.coordinate {
-                            Annotation(report.title, coordinate: coord) {
-                                ReportAnnotationView(report: report, showsTitle: true)
+                            Annotation("", coordinate: coord) {
+                                Button(action: {
+                                    if selectedReportID == report.id {
+                                        selectedReportID = nil
+                                    } else {
+                                        selectedReportID = report.id
+                                    }
+                                }) {
+                                    ReportAnnotationView(report: report, showsTitle: selectedReportID == report.id)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -103,4 +113,3 @@ struct AutoridadesView: View {
 #Preview {
     AutoridadesView()
 }
-
