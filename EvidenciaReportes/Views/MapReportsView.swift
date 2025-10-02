@@ -79,10 +79,42 @@ struct MapReportsView: View {
         }
     }
     
+    private func regionThatFits(_ coords: [CLLocationCoordinate2D], padding: Double = 1.2) -> MKCoordinateRegion? {
+        guard !coords.isEmpty else { return nil }
+        if coords.count == 1, let c = coords.first {
+            let span = MKCoordinateSpan(
+                latitudeDelta: max(region.span.latitudeDelta * 0.5, minDelta),
+                longitudeDelta: max(region.span.longitudeDelta * 0.5, minDelta)
+            )
+            return MKCoordinateRegion(center: c, span: span)
+        }
+        var minLat = coords.first!.latitude
+        var maxLat = coords.first!.latitude
+        var minLon = coords.first!.longitude
+        var maxLon = coords.first!.longitude
+        for c in coords.dropFirst() {
+            minLat = min(minLat, c.latitude)
+            maxLat = max(maxLat, c.latitude)
+            minLon = min(minLon, c.longitude)
+            maxLon = max(maxLon, c.longitude)
+        }
+        let centerLat = (minLat + maxLat) / 2.0
+        let centerLon = (minLon + maxLon) / 2.0
+        var latDelta = (maxLat - minLat) * padding
+        var lonDelta = (maxLon - minLon) * padding
+        latDelta = max(min(latDelta, maxDelta), minDelta)
+        lonDelta = max(min(lonDelta, maxDelta), minDelta)
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
+            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
+        )
+    }
+    
     var body: some View {
         ZStack {
             Map(coordinateRegion: $region,
                 interactionModes: [.all],
+                showsUserLocation: true,
                 annotationItems: clusters
             ) { cluster in
                 MapAnnotation(coordinate: cluster.coordinate) {
@@ -99,13 +131,22 @@ struct MapReportsView: View {
                     } else {
                         Button(action: {
                             selectedCluster = cluster
-                            withAnimation { region.center = cluster.coordinate }
+                            let coords = cluster.reports.compactMap { $0.coordinate }
+                            if let fit = regionThatFits(coords, padding: 1.3) {
+                                withAnimation { region = fit }
+                            } else {
+                                withAnimation { region.center = cluster.coordinate }
+                            }
                         }) {
                             ClusterAnnotationView(count: cluster.reports.count)
                         }
                         .buttonStyle(.plain)
                     }
                 }
+            }
+            .mapControls {
+                MapCompass()
+                MapScaleView()
             }
             .ignoresSafeArea()
             
@@ -310,3 +351,4 @@ private struct FilterChip: View {
         MapReportsView(reports: .constant(store.reports))
     }
 }
+
