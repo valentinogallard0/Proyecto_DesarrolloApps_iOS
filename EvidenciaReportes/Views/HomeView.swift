@@ -203,6 +203,10 @@ struct HomeView: View {
             VStack(spacing: 10) {
                 ForEach(recentFromStore) { report in
                     Button {
+                        #if os(iOS)
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                        #endif
                         selectedReport = report
                     } label: {
                         DetailedReportView(report: report)
