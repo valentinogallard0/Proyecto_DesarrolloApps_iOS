@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import UIKit
 
 struct ReportDetailView: View {
     let report: Report
@@ -17,6 +18,15 @@ struct ReportDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
+                    if let data = report.imageData, let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 220)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                     if let coord = report.coordinate {
                         mapPreview(coord)
                     }
