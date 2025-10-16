@@ -160,6 +160,7 @@ struct AddReportView: View {
                             subtitle: descriptionText,
                             date: .now,
                             coordinate: selectedCoordinate,
+                            address: address,
                             status: .new
                         )
                         onSave(newReport)
