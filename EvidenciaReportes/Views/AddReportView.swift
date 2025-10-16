@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import PhotosUI
 
 struct AddReportView: View {
     let center: CLLocationCoordinate2D
@@ -19,6 +20,9 @@ struct AddReportView: View {
     @State private var descriptionText: String = ""
     @State private var selectedCoordinate: CLLocationCoordinate2D? = nil
     @State private var region: MKCoordinateRegion
+    
+    @State private var imageData: Data? = nil
+    @State private var showCamera: Bool = false
     
     @State private var address: String? = nil
     @State private var isGeocoding: Bool = false
@@ -33,6 +37,10 @@ struct AddReportView: View {
             center: center,
             span: MKCoordinateSpan(latitudeDelta: 0.006, longitudeDelta: 0.006)
         ))
+    }
+    
+    private func jpegData(from image: UIImage, quality: CGFloat = 0.85) -> Data? {
+        return image.jpegData(compressionQuality: quality)
     }
     
     var body: some View {
@@ -50,6 +58,71 @@ struct AddReportView: View {
                     TextField("Título", text: $titleText)
                     TextField("Descripción (opcional)", text: $descriptionText, axis: .vertical)
                         .lineLimit(3...6)
+                }
+                
+                Section("Foto") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if let imageData, let uiImage = UIImage(data: imageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 180)
+                                .clipped()
+                                .cornerRadius(12)
+                                .overlay(alignment: .topTrailing) {
+                                    Button(role: .destructive) { self.imageData = nil } label: {
+                                        Image(systemName: "trash")
+                                            .padding(8)
+                                            .background(.ultraThinMaterial, in: Circle())
+                                    }
+                                    .padding(8)
+                                }
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.secondary.opacity(0.08))
+                                VStack(spacing: 8) {
+                                    Image(systemName: "photo.on.rectangle")
+                                        .font(.title2)
+                                        .foregroundStyle(.secondary)
+                                    Text("Agrega una foto como evidencia")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(height: 120)
+                        }
+
+                        HStack(spacing: 12) {
+                            PhotosPicker(selection: Binding(get: { nil }, set: { newItem in
+                                guard let item = newItem else { return }
+                                Task {
+                                    if let data = try? await item.loadTransferable(type: Data.self) {
+                                        await MainActor.run { self.imageData = data }
+                                    }
+                                }
+                            })) {
+                                Image(systemName: "photo")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: 44, height: 44)
+                                    .background(.thinMaterial, in: Circle())
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                showCamera = true
+                            } label: {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.accentColor, in: Circle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
                 
                 Section("Ubicación") {
@@ -161,7 +234,8 @@ struct AddReportView: View {
                             date: .now,
                             coordinate: selectedCoordinate,
                             address: address,
-                            status: .new
+                            status: .new,
+                            imageData: imageData
                         )
                         onSave(newReport)
                         dismiss()
@@ -195,6 +269,13 @@ struct AddReportView: View {
             }
             .onChange(of: region.center) { _ in
                 search.updateRegion(region)
+            }
+            .sheet(isPresented: $showCamera) {
+                CameraView { image in
+                    if let image, let data = jpegData(from: image) {
+                        self.imageData = data
+                    }
+                }
             }
         }
     }
@@ -254,5 +335,37 @@ final class SearchHelper: NSObject, ObservableObject, MKLocalSearchCompleterDele
 extension CLLocationCoordinate2D: Equatable {
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
         lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+    }
+}
+
+// MARK: - Camera Wrapper
+struct CameraView: UIViewControllerRepresentable {
+    typealias UIViewControllerType = UIImagePickerController
+    var onCapture: (UIImage?) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        picker.allowsEditing = false
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(onCapture: onCapture) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let onCapture: (UIImage?) -> Void
+        init(onCapture: @escaping (UIImage?) -> Void) { self.onCapture = onCapture }
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            let image = info[.originalImage] as? UIImage
+            onCapture(image)
+            picker.dismiss(animated: true)
+        }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            onCapture(nil)
+            picker.dismiss(animated: true)
+        }
     }
 }

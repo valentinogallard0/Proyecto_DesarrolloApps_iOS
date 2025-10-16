@@ -17,6 +17,7 @@ struct Report: Identifiable {
     let coordinate: CLLocationCoordinate2D?   // opcional para no romper HomeView
     var address: String?
     var status: ReportStatus
+    var imageData: Data?    // Foto opcional adjunta al reporte
 
     init(id: UUID = UUID(),
          type: ReportType,
@@ -25,7 +26,8 @@ struct Report: Identifiable {
          date: Date,
          coordinate: CLLocationCoordinate2D? = nil,
          address: String? = nil,
-         status: ReportStatus = .new) {
+         status: ReportStatus = .new,
+         imageData: Data? = nil) {
         self.id = id
         self.type = type
         self.title = title
@@ -34,5 +36,6 @@ struct Report: Identifiable {
         self.coordinate = coordinate
         self.address = address
         self.status = status
+        self.imageData = imageData
     }
 }
