@@ -27,8 +27,12 @@ struct AllReportsSheet: View {
                     .background(Color(.systemGroupedBackground))
                 } else {
                     List(sortedReports) { report in
-                        AllReportsRow(report: report)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        NavigationLink {
+                            ReportDetailView(report: report)
+                        } label: {
+                            DetailedReportView(report: report)
+                        }
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     }
                     .listStyle(.plain)
                 }
@@ -40,66 +44,6 @@ struct AllReportsSheet: View {
                 }
             }
         }
-    }
-}
-
-private struct AllReportsRow: View {
-    let report: Report
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(report.type.color.opacity(0.15))
-                Image(systemName: report.type.icon)
-                    .foregroundStyle(report.type.color)
-            }
-            .frame(width: 44, height: 44)
-            
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(report.title)
-                        .font(.headline)
-                        .lineLimit(1)
-                    Spacer()
-                    Text(dateString(report.date))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if !report.subtitle.isEmpty {
-                    Text(report.subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-                
-                HStack(spacing: 10) {
-                    Label(report.type.rawValue, systemImage: "tag")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if let _ = report.coordinate {
-                        Label("Con ubicación", systemImage: "mappin")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Text(report.status.rawValue)
-                        .font(.caption).bold()
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(report.status.color.opacity(0.15), in: Capsule())
-                        .foregroundStyle(report.status.color)
-                }
-            }
-        }
-    }
-    
-    private func dateString(_ date: Date) -> String {
-        let df = DateFormatter()
-        df.dateStyle = .medium
-        df.timeStyle = .short
-        return df.string(from: date)
     }
 }
 
