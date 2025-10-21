@@ -78,13 +78,7 @@ struct HomeView: View {
                     .font(.title.weight(.heavy))
                     
                 Spacer()
-                Button {
-                    // Acción: abrir buscador / cambiar ubicación
-                } label: {
-                    Label("Cambiar", systemImage: "location.circle")
-                }
-                .buttonStyle(.bordered)
-                .font(.subheadline)
+
             }
             Text("Reporta. Participa. Respira mejor.")
                 .font(.subheadline)
