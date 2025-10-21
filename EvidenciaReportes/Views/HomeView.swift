@@ -66,8 +66,7 @@ struct HomeView: View {
     
     private var titleBar: some View {
         HStack(spacing: 8) {
-            Image(systemName: "leaf.fill").foregroundStyle(.green)
-            Text("CiudadActiva")
+            Text("Ciudad Activa")
                 .font(.headline)
         }
     }
@@ -76,22 +75,14 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label("Monterrey, NL", systemImage: "mappin.and.ellipse")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.title.weight(.heavy))
+                    
                 Spacer()
-                Button {
-                    // Acción: abrir buscador / cambiar ubicación
-                } label: {
-                    Label("Cambiar", systemImage: "location.circle")
-                }
-                .buttonStyle(.bordered)
-                .font(.subheadline)
+
             }
             Text("Reporta. Participa. Respira mejor.")
-                .font(.title2).bold()
-            Text("Comparte baches, luminarias y fugas con foto + ubicación. Consulta el aire en tiempo real.")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+
         }
     }
     
