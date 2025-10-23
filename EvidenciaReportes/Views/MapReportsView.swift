@@ -9,6 +9,12 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
+struct ReportCluster: Identifiable {
+    let id: String
+    let coordinate: CLLocationCoordinate2D
+    let reports: [Report]
+}
+
 struct MapReportsView: View {
     @Binding var reports: [Report]
     @Environment(\.dismiss) private var dismiss
@@ -235,12 +241,6 @@ struct MapReportsView: View {
     }
 }
 
-private struct ReportCluster: Identifiable {
-    let id: String
-    let coordinate: CLLocationCoordinate2D
-    let reports: [Report]
-}
-
 private struct ClusterAnnotationView: View {
     let count: Int
     var body: some View {
@@ -320,9 +320,7 @@ private struct ClusterReportsList: View {
     }
     
     private func relative(_ date: Date) -> String {
-        let df = RelativeDateTimeFormatter()
-        df.unitsStyle = .short
-        return df.localizedString(for: date, relativeTo: .now)
+        return DateUtils.relativeString(for: date)
     }
 }
 
@@ -351,4 +349,3 @@ private struct FilterChip: View {
         MapReportsView(reports: .constant(store.reports))
     }
 }
-
