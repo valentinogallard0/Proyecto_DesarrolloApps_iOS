@@ -1,10 +1,10 @@
-// View for displaying a report's image, if available
-//  EvidenciaReportes
-//  Creado para refactorización
+// filepath: /Users/valentinodepaola/.../Views/Deprecated/ReportImageView_Deprecated.swift
+// Deprecated copy of ReportImageView (moved here for cleanup)
+
 import SwiftUI
 import UIKit
 
-struct ReportImageView: View {
+struct ReportImageView_Deprecated: View {
     let imageData: Data?
     let height: CGFloat
     
@@ -38,5 +38,5 @@ struct ReportImageView: View {
 }
 
 #Preview {
-    ReportImageView(imageData: nil, height: 160)
+    ReportImageView_Deprecated(imageData: nil, height: 160)
 }

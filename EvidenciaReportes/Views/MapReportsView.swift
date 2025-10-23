@@ -320,9 +320,7 @@ private struct ClusterReportsList: View {
     }
     
     private func relative(_ date: Date) -> String {
-        let df = RelativeDateTimeFormatter()
-        df.unitsStyle = .short
-        return df.localizedString(for: date, relativeTo: .now)
+        return DateUtils.relativeString(for: date)
     }
 }
 
@@ -351,4 +349,3 @@ private struct FilterChip: View {
         MapReportsView(reports: .constant(store.reports))
     }
 }
-

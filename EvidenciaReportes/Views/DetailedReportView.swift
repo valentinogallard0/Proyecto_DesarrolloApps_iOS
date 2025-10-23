@@ -42,16 +42,8 @@ struct DetailedReportView: View {
             }
 
             // Media thumbnail if available
-            // TODO: Add thumbnail rendering when Report provides an image source, e.g. `imageData`, `photo`, or `attachments`.
-            // Example implementation when you have `imageData`:
-            // if let data = report.imageData, let uiImage = UIImage(data: data) {
-            //     Image(uiImage: uiImage)
-            //         .resizable()
-            //         .scaledToFill()
-            //         .frame(height: 160)
-            //         .clipped()
-            //         .cornerRadius(12)
-            // }
+            // Media thumbnail: si el modelo Report incluye imageData, renderizarla aquí.
+            // (Se eliminó el ejemplo comentado para mantener el archivo limpio.)
 
             // Meta info: type, location, coordinates
             VStack(alignment: .leading, spacing: 8) {
@@ -92,8 +84,6 @@ struct DetailedReportView: View {
     }
 
     private func dateString(_ date: Date) -> String {
-        let df = RelativeDateTimeFormatter()
-        df.unitsStyle = .short
-        return df.localizedString(for: date, relativeTo: .now)
+        return DateUtils.relativeString(for: date)
     }
 }
