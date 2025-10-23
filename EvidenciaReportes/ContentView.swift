@@ -9,20 +9,25 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var store: ReportsStore
+    @State private var showingSplash = true
     
     var body: some View {
-        TabView {
-            NavigationStack { HomeView() }
-                .tabItem { Label("Inicio", systemImage: "house.fill") }
+        if showingSplash {
+            SplashView(isActive: $showingSplash)
+        } else {
+            TabView {
+                NavigationStack { HomeView() }
+                    .tabItem { Label("Inicio", systemImage: "house.fill") }
+                
+                NavigationStack { MapReportsView(reports: $store.reports)}
+                    .tabItem { Label("Mapa", systemImage: "map") }
 
-            NavigationStack { AutoridadesView() }
-                .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
+                NavigationStack { AutoridadesView() }
+                    .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
 
-            NavigationStack { MapReportsView(reports: $store.reports) }
-                .tabItem { Label("Mapa", systemImage: "map") }
-
-            NavigationStack { Text("Perfil (próximamente)") }
-                .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+                NavigationStack { Text("Perfil (próximamente)") }
+                    .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+            }
         }
     }
 }
@@ -31,4 +36,3 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
-
