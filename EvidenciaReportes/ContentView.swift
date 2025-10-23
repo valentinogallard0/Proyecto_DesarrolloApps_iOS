@@ -18,12 +18,12 @@ struct ContentView: View {
             TabView {
                 NavigationStack { HomeView() }
                     .tabItem { Label("Inicio", systemImage: "house.fill") }
+                
+                NavigationStack { MapReportsView(reports: $store.reports)}
+                    .tabItem { Label("Mapa", systemImage: "map") }
 
                 NavigationStack { AutoridadesView() }
                     .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
-
-                NavigationStack { MapReportsView(reports: $store.reports)}
-                    .tabItem { Label("Mapa", systemImage: "map") }
 
                 NavigationStack { Text("Perfil (próximamente)") }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
