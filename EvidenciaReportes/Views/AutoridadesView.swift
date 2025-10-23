@@ -53,8 +53,7 @@ struct AutoridadesView: View {
                     }
                 }
                 .frame(height: 280)
-                .cornerRadius(20)
-                .shadow(radius: 6)
+                .cardStyle()
                 .padding(.horizontal)
                 
                 // 📊 Filtros por estado (usa ReportStatus)
@@ -104,6 +103,7 @@ struct AutoridadesView: View {
                     }
                     .padding(.vertical, 6)
                 }
+                .cardStyle()
             }
             .navigationTitle("Panel de Autoridades")
         }
@@ -112,4 +112,5 @@ struct AutoridadesView: View {
 
 #Preview {
     AutoridadesView()
+        .environmentObject(ReportsStore())
 }

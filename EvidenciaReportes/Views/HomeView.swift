@@ -8,6 +8,7 @@ import SwiftUI
 import CoreLocation
 import MapKit
 
+
 // MARK: - Main Screen
 struct HomeView: View {
     @EnvironmentObject private var store: ReportsStore
@@ -196,7 +197,7 @@ struct HomeView: View {
                         #endif
                         selectedReport = report
                     } label: {
-                        DetailedReportView(report: report)
+                        ReportCardView(report: report, showStatus: false, showDate: true)
                     }
                     .buttonStyle(.plain)
                 }
