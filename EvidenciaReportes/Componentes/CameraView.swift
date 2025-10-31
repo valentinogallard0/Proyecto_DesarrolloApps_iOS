@@ -10,10 +10,21 @@ import SwiftUI
 struct CameraView: UIViewControllerRepresentable {
     typealias UIViewControllerType = UIImagePickerController
     var onCapture: (UIImage?) -> Void
+    
+    /// Determina el tipo de fuente disponible para evitar crasheos en simulador o dispositivos sin cámara.
+    private var availableSourceType: UIImagePickerController.SourceType {
+        if UIImagePickerController.isSourceTypeAvailable(.camera) {
+            return .camera
+        } else if UIImagePickerController.isSourceTypeAvailable(.photoLibrary) {
+            return .photoLibrary
+        } else {
+            return .savedPhotosAlbum
+        }
+    }
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
-        picker.sourceType = .camera
+        picker.sourceType = availableSourceType
         picker.delegate = context.coordinator
         picker.allowsEditing = false
         return picker

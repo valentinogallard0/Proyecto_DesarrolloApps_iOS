@@ -42,10 +42,6 @@ struct MapReportsView: View {
         region.span = MKCoordinateSpan(latitudeDelta: newLat, longitudeDelta: newLon)
     }
     
-    private var reportsWithCoords: [Report] {
-        reports.filter { $0.coordinate != nil }
-    }
-    
     private var filteredReports: [Report] {
         if let t = selectedType {
             return reports.filter { $0.type == t }
@@ -114,6 +110,10 @@ struct MapReportsView: View {
             center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon),
             span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
         )
+    }
+    
+    private func updateClusters() {
+        clusters = makeClusters(from: filteredReports, in: region)
     }
     
     var body: some View {
@@ -209,19 +209,22 @@ struct MapReportsView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            clusters = makeClusters(from: filteredReports, in: region)
+            updateClusters()
         }
         .onChange(of: region.center) { _ in
-            clusters = makeClusters(from: filteredReports, in: region)
+            updateClusters()
         }
         .onChange(of: region.span.latitudeDelta) { _ in
-            clusters = makeClusters(from: filteredReports, in: region)
+            updateClusters()
         }
-        .onChange(of: reports.map(\.id)) { _ in
-            clusters = makeClusters(from: filteredReports, in: region)
+        .onChange(of: region.span.longitudeDelta) { _ in
+            updateClusters()
+        }
+        .onChange(of: reports) { _ in
+            updateClusters()
         }
         .onChange(of: selectedType) { _ in
-            clusters = makeClusters(from: filteredReports, in: region)
+            updateClusters()
         }
         .sheet(isPresented: $showAdd) {
             AddReportView(center: region.center) { newReport in

@@ -26,6 +26,7 @@ struct AddReportView: View {
     
     @State private var address: String? = nil
     @State private var isGeocoding: Bool = false
+    @State private var skipReverseGeocode = false
     private let geocoder = CLGeocoder()
     @StateObject private var search = SearchHelper()
     
@@ -244,13 +245,24 @@ struct AddReportView: View {
                 }
             }
             .onChange(of: selectedCoordinate) { coord in
-                address = nil
-                isGeocoding = false
                 geocoder.cancelGeocode()
-                guard let coord = coord else { return }
+                
+                guard let coord = coord else {
+                    isGeocoding = false
+                    address = nil
+                    skipReverseGeocode = false
+                    return
+                }
+                
+                if skipReverseGeocode {
+                    skipReverseGeocode = false
+                    return
+                }
+                
+                address = nil
                 isGeocoding = true
                 let location = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-                geocoder.reverseGeocodeLocation(location) { placemarks, error in
+                geocoder.reverseGeocodeLocation(location) { placemarks, _ in
                     DispatchQueue.main.async {
                         isGeocoding = false
                         if let p = placemarks?.first {
@@ -286,6 +298,7 @@ struct AddReportView: View {
         mkSearch.start { response, error in
             guard let item = response?.mapItems.first else { return }
             let coord = item.placemark.coordinate
+            skipReverseGeocode = true
             selectedCoordinate = coord
             address = formatAddress(from: item.placemark)
             withAnimation {

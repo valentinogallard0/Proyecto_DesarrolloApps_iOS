@@ -8,7 +8,7 @@ import Foundation
 import CoreLocation
 
 //ocupamos aqui poner un Codable para guardar en UserDefaults, leer en JSON y enviar a servidor
-struct Report: Identifiable {
+struct Report: Identifiable, Equatable {
     let id: UUID
     let type: ReportType
     let title: String
@@ -37,5 +37,17 @@ struct Report: Identifiable {
         self.address = address
         self.status = status
         self.imageData = imageData
+    }
+    
+    static func == (lhs: Report, rhs: Report) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.type == rhs.type &&
+        lhs.title == rhs.title &&
+        lhs.subtitle == rhs.subtitle &&
+        lhs.date == rhs.date &&
+        lhs.coordinate == rhs.coordinate &&
+        lhs.address == rhs.address &&
+        lhs.status == rhs.status &&
+        lhs.imageData == rhs.imageData
     }
 }
