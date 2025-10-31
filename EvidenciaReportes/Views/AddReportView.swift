@@ -27,6 +27,7 @@ struct AddReportView: View {
     @State private var address: String? = nil
     @State private var isGeocoding: Bool = false
     @State private var skipReverseGeocode = false
+    @State private var showExpandedMap = false
     private let geocoder = CLGeocoder()
     @StateObject private var search = SearchHelper()
     
@@ -193,6 +194,18 @@ struct AddReportView: View {
                                     .background(.ultraThinMaterial, in: Capsule())
                                     .padding(8)
                             }
+                            .overlay(alignment: .topTrailing) {
+                                Button {
+                                    showExpandedMap = true
+                                } label: {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.body.weight(.semibold))
+                                        .padding(8)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                }
+                                .buttonStyle(.plain)
+                                .padding(8)
+                            }
                         }
                         
                         if selectedCoordinate == nil {
@@ -291,6 +304,46 @@ struct AddReportView: View {
                     if let image, let data = jpegData(from: image) {
                         self.imageData = data
                     }
+                }
+            }
+            .sheet(isPresented: $showExpandedMap) {
+                NavigationStack {
+                    MapReader { proxy in
+                        Map(initialPosition: .region(region)) {
+                            if let coord = selectedCoordinate {
+                                Annotation("Ubicación", coordinate: coord) {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .font(.title)
+                                        .foregroundStyle(.red)
+                                        .shadow(radius: 2)
+                                }
+                            }
+                        }
+                        .ignoresSafeArea()
+                        .simultaneousGesture(
+                            SpatialTapGesture().onEnded { value in
+                                guard let coord = proxy.convert(value.location, from: .local) else { return }
+                                skipReverseGeocode = false
+                                withAnimation {
+                                    selectedCoordinate = coord
+                                }
+                            }
+                        )
+                        .overlay(alignment: .topLeading) {
+                            Text("Toca el mapa para colocar el pin")
+                                .font(.caption)
+                                .padding(10)
+                                .background(.ultraThinMaterial, in: Capsule())
+                                .padding()
+                        }
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cerrar") { showExpandedMap = false }
+                        }
+                    }
+                    .navigationTitle("Mapa ampliado")
+                    .navigationBarTitleDisplayMode(.inline)
                 }
             }
         }
