@@ -177,11 +177,15 @@ struct AddReportView: View {
                             }
                             .frame(height: 220)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .gesture(SpatialTapGesture().onEnded { value in
-                                if let coord = proxy.convert(value.location, from: .local) {
-                                    selectedCoordinate = coord
+                            .simultaneousGesture(
+                                SpatialTapGesture().onEnded { value in
+                                    guard let coord = proxy.convert(value.location, from: .local) else { return }
+                                    skipReverseGeocode = false
+                                    withAnimation {
+                                        selectedCoordinate = coord
+                                    }
                                 }
-                            })
+                            )
                             .overlay(alignment: .topLeading) {
                                 Text("Toca el mapa para colocar el pin")
                                     .font(.caption)
