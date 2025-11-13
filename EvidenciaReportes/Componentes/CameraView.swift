@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct CameraView: UIViewControllerRepresentable {
     typealias UIViewControllerType = UIImagePickerController
