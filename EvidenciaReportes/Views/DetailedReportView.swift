@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct DetailedReportView: View {
     let report: Report
@@ -41,9 +42,16 @@ struct DetailedReportView: View {
                 }
             }
 
-            // Media thumbnail if available
-            // Media thumbnail: si el modelo Report incluye imageData, renderizarla aquí.
-            // (Se eliminó el ejemplo comentado para mantener el archivo limpio.)
+            if let data = report.imageData,
+               let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipped()
+            }
 
             // Meta info: type, location, coordinates
             VStack(alignment: .leading, spacing: 8) {
