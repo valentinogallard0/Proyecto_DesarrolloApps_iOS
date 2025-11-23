@@ -7,8 +7,7 @@
 import Foundation
 import CoreLocation
 
-//ocupamos aqui poner un Codable para guardar en UserDefaults, leer en JSON y enviar a servidor
-struct Report: Identifiable, Equatable {
+struct Report: Identifiable, Equatable, Codable {
     let id: UUID
     let type: ReportType
     let title: String
@@ -49,5 +48,48 @@ struct Report: Identifiable, Equatable {
         lhs.address == rhs.address &&
         lhs.status == rhs.status &&
         lhs.imageData == rhs.imageData
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, type, title, subtitle, date, coordinate, address, status, imageData
+    }
+    
+    private struct CoordinateWrapper: Codable {
+        let latitude: Double
+        let longitude: Double
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        type = try container.decode(ReportType.self, forKey: .type)
+        title = try container.decode(String.self, forKey: .title)
+        subtitle = try container.decode(String.self, forKey: .subtitle)
+        date = try container.decode(Date.self, forKey: .date)
+        if let coordinateWrapper = try container.decodeIfPresent(CoordinateWrapper.self, forKey: .coordinate) {
+            coordinate = CLLocationCoordinate2D(latitude: coordinateWrapper.latitude,
+                                                longitude: coordinateWrapper.longitude)
+        } else {
+            coordinate = nil
+        }
+        address = try container.decodeIfPresent(String.self, forKey: .address)
+        status = try container.decode(ReportStatus.self, forKey: .status)
+        imageData = try container.decodeIfPresent(Data.self, forKey: .imageData)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(type, forKey: .type)
+        try container.encode(title, forKey: .title)
+        try container.encode(subtitle, forKey: .subtitle)
+        try container.encode(date, forKey: .date)
+        if let coordinate {
+            let wrapper = CoordinateWrapper(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            try container.encode(wrapper, forKey: .coordinate)
+        }
+        try container.encodeIfPresent(address, forKey: .address)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(imageData, forKey: .imageData)
     }
 }
