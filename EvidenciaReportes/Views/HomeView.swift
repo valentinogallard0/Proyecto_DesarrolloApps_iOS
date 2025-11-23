@@ -47,7 +47,7 @@ struct HomeView: View {
             .sheet(item: $selectedType, onDismiss: { selectedType = nil }) { type in
                 let center = vm.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
                 AddReportView(center: center, initialType: type) { newReport in
-                    store.reports.append(newReport)
+                    store.add(newReport)
                 }
             }
             .sheet(isPresented: $showAllReportsSheet) {
@@ -215,4 +215,3 @@ struct HomeView_Previews: PreviewProvider {
         }
     }
 }
-
