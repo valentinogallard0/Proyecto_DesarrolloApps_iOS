@@ -28,8 +28,11 @@ struct AddReportView: View {
     @State private var isGeocoding: Bool = false
     @State private var skipReverseGeocode = false
     @State private var showExpandedMap = false
+    @State private var showInvalidLocationAlert = false
     private let geocoder = CLGeocoder()
     @StateObject private var search = SearchHelper()
+    private let nuevoLeonLatitudeRange: ClosedRange<Double> = 23.0...27.5
+    private let nuevoLeonLongitudeRange: ClosedRange<Double> = (-101.8)...(-98.0)
     
     init(center: CLLocationCoordinate2D, initialType: ReportType? = nil, onSave: @escaping (Report) -> Void) {
         self.center = center
@@ -181,10 +184,7 @@ struct AddReportView: View {
                             .simultaneousGesture(
                                 SpatialTapGesture().onEnded { value in
                                     guard let coord = proxy.convert(value.location, from: .local) else { return }
-                                    skipReverseGeocode = false
-                                    withAnimation {
-                                        selectedCoordinate = coord
-                                    }
+                                    selectCoordinate(coord)
                                 }
                             )
                             .overlay(alignment: .topLeading) {
@@ -323,10 +323,7 @@ struct AddReportView: View {
                         .simultaneousGesture(
                             SpatialTapGesture().onEnded { value in
                                 guard let coord = proxy.convert(value.location, from: .local) else { return }
-                                skipReverseGeocode = false
-                                withAnimation {
-                                    selectedCoordinate = coord
-                                }
+                                selectCoordinate(coord)
                             }
                         )
                         .overlay(alignment: .topLeading) {
@@ -346,6 +343,11 @@ struct AddReportView: View {
                     .navigationBarTitleDisplayMode(.inline)
                 }
             }
+            .alert("Fuera de Nuevo León", isPresented: $showInvalidLocationAlert) {
+                Button("Entendido", role: .cancel) { }
+            } message: {
+                Text("Selecciona un punto dentro del estado de Nuevo León para generar reportes.")
+            }
         }
     }
     
@@ -355,16 +357,15 @@ struct AddReportView: View {
         mkSearch.start { response, error in
             guard let item = response?.mapItems.first else { return }
             let coord = item.placemark.coordinate
-            skipReverseGeocode = true
-            selectedCoordinate = coord
-            address = formatAddress(from: item.placemark)
-            withAnimation {
-                region.center = coord
-                region.span = MKCoordinateSpan(latitudeDelta: 0.004, longitudeDelta: 0.004)
+            if selectCoordinate(coord, skipReverseGeocode: true, formattedAddress: formatAddress(from: item.placemark)) {
+                withAnimation {
+                    region.center = coord
+                    region.span = MKCoordinateSpan(latitudeDelta: 0.004, longitudeDelta: 0.004)
+                }
+                // Limpiar sugerencias y query
+                self.search.query = ""
+                self.search.results = []
             }
-            // Limpiar sugerencias y query
-            self.search.query = ""
-            self.search.results = []
         }
     }
     
@@ -373,6 +374,29 @@ struct AddReportView: View {
             .compactMap { $0 }
             .filter { !$0.isEmpty }
         return parts.joined(separator: ", ")
+    }
+
+    private func isCoordinateInNuevoLeon(_ coordinate: CLLocationCoordinate2D) -> Bool {
+        nuevoLeonLatitudeRange.contains(coordinate.latitude) && nuevoLeonLongitudeRange.contains(coordinate.longitude)
+    }
+
+    @discardableResult
+    private func selectCoordinate(_ coordinate: CLLocationCoordinate2D, skipReverseGeocode shouldSkip: Bool = false, formattedAddress: String? = nil) -> Bool {
+        guard isCoordinateInNuevoLeon(coordinate) else {
+            showInvalidLocationAlert = true
+            skipReverseGeocode = false
+            return false
+        }
+        skipReverseGeocode = shouldSkip
+        if let formattedAddress {
+            address = formattedAddress
+        } else {
+            address = nil
+        }
+        withAnimation {
+            selectedCoordinate = coordinate
+        }
+        return true
     }
 }
 
