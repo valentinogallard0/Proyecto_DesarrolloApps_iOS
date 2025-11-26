@@ -18,7 +18,7 @@ class AirQualityViewModel: ObservableObject{
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     
-    private let service = WeatherService()
+    private let service = AQIService()
     
     func loadForMonterrey() async {
         isLoading = true

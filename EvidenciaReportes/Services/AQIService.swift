@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct WeatherService {
+struct AQIService {
     
     private var apiKey: String = "222a368951ac4a0f72962ac0168cc4a7"
     
