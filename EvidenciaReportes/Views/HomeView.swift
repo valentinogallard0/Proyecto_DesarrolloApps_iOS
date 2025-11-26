@@ -125,19 +125,7 @@ struct HomeView: View {
                             .font(.footnote)
                             .opacity(0.8)
                     }
-                }
-                
-                Rectangle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(height: 1)
-                
-                HStack(spacing: 10) {
-                    if airQualityVM.pm25Text != "-" {
-                        metricChip(text: airQualityVM.pm25Text)
-                    }
-                    if airQualityVM.pm10Text != "-" {
-                        metricChip(text: airQualityVM.pm10Text)
-                    }
+                    Spacer()
                     Spacer()
                     if let value = airQualityValue {
                         metricChip(text: "Nivel \(value)/5")
