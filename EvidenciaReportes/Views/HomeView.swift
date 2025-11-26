@@ -13,6 +13,7 @@ import MapKit
 struct HomeView: View {
     @EnvironmentObject private var store: ReportsStore
     @StateObject private var vm = HomeViewModel()
+    @StateObject private var airQualityVM = AirQualityViewModel()
     @State private var selectedType: ReportType? = nil
     @State private var goToMap = false
     @State private var showAllReportsSheet = false
@@ -58,6 +59,9 @@ struct HomeView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .task {
+                await airQualityVM.loadForMonterrey()
+            }
         }
     }
     
@@ -84,47 +88,76 @@ struct HomeView: View {
     }
     
     private var aqiCard: some View {
-        Group {
-            if let aqi = vm.aqi {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(aqi.color.opacity(0.15))
-                        Text("\(aqi.aqi)")
-                            .font(.title2).bold()
-                            .foregroundStyle(aqi.color)
+        let gradient = aqiGradient(for: airQualityValue)
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Calidad del aire")
+                        .font(.headline)
+                        .textCase(.uppercase)
+                        .opacity(0.85)
+                    Text(airQualityVM.aqiLevel == "-" ? "Sin datos" : airQualityVM.aqiLevel)
+                        .font(.title3.weight(.semibold))
+                }
+                Spacer()
+                Image(systemName: "aqi.low")
+                    .font(.system(size: 30, weight: .bold))
+                    .opacity(0.85)
+            }
+            
+            if airQualityVM.isLoading {
+                ProgressView("Actualizando datos…")
+                    .tint(.white)
+            } else if let error = airQualityVM.errorMessage {
+                Text(error)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.leading)
+            } else {
+                HStack(alignment: .lastTextBaseline, spacing: 10) {
+                    Text(airQualityVM.aqiNumber == "-" ? "--" : airQualityVM.aqiNumber)
+                        .font(.system(size: 44, weight: .heavy, design: .rounded))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Índice AQI")
+                            .font(.caption)
+                            .opacity(0.8)
+                        Text("Monterrey Centro")
+                            .font(.footnote)
+                            .opacity(0.8)
                     }
-                    .frame(width: 64, height: 64)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Calidad del aire")
-                            .font(.headline)
-                        HStack {
-                            Text(aqi.label).bold().foregroundStyle(aqi.color)
-                            Text("•")
-                            Text(aqi.advice).foregroundStyle(.secondary)
-                        }
-                        .font(.subheadline)
+                }
+                
+                Rectangle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(height: 1)
+                
+                HStack(spacing: 10) {
+                    if airQualityVM.pm25Text != "-" {
+                        metricChip(text: airQualityVM.pm25Text)
+                    }
+                    if airQualityVM.pm10Text != "-" {
+                        metricChip(text: airQualityVM.pm10Text)
                     }
                     Spacer()
-                    Button {
-                        // Acción: ver detalle AQI
-                    } label: {
-                        Image(systemName: "chevron.right")
+                    if let value = airQualityValue {
+                        metricChip(text: "Nivel \(value)/5")
                     }
-                    .buttonStyle(.plain)
                 }
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(.background)
-                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-                )
-            } else {
-                ProgressView("Obteniendo calidad del aire…")
-                    .frame(maxWidth: .infinity)
-                    .padding()
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 18)
+        .background(
+            gradient
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .foregroundColor(.white)
+        .shadow(color: Color.black.opacity(0.12), radius: 10, y: 6)
     }
     
     private var quickActions: some View {
@@ -203,6 +236,43 @@ struct HomeView: View {
                 }
             }
         }
+    }
+    
+    private var airQualityValue: Int? {
+        guard let value = Int(airQualityVM.aqiNumber) else { return nil }
+        return value
+    }
+    
+    private func aqiGradient(for value: Int?) -> LinearGradient {
+        let colors: [Color]
+        if let value, (1...5).contains(value) {
+            let ratio = Double(value - 1) / 4.0
+            let hue = max(0, 0.33 - (0.33 * ratio))
+            let start = Color(hue: hue, saturation: 0.55, brightness: 0.9)
+            let end = Color(hue: hue, saturation: 0.85, brightness: 0.7)
+            colors = [start, end]
+        } else {
+            colors = [
+                Color.gray.opacity(0.35),
+                Color.gray.opacity(0.55)
+            ]
+        }
+        
+        return LinearGradient(
+            colors: colors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private func metricChip(text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(Color.white.opacity(0.18))
+            .clipShape(Capsule(style: .continuous))
     }
 }
 
