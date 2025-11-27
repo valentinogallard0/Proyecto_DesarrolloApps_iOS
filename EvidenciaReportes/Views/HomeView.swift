@@ -265,22 +265,27 @@ struct HomeView: View {
     }
     
     private var temperatureBadge: some View {
-        VStack(spacing: 0) {
-            // Weather icon on top
-            Image(systemName: weatherVM.iconName)
-                .font(.system(size: 34, weight: .regular))
-                .foregroundStyle(iconColor(for: weatherVM.iconName))
-                .shadow(color: Color.black.opacity(0.12), radius: 6, y: 3)
-                .padding(.top, 8)
-                .padding(.bottom, -4) // slight overlap into the temperature
-
-            // Temperature text slightly overlapping the icon area
-            Text(temperatureText)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundStyle(.primary)
-                .padding(.top, 5)
+        NavigationLink {
+            EnvironmentDetailView(weatherVM: weatherVM, airQualityVM: airQualityVM)
+        } label: {
+            VStack(spacing: 0) {
+                // Weather icon on top
+                Image(systemName: weatherVM.iconName)
+                    .font(.system(size: 34, weight: .regular))
+                    .foregroundStyle(iconColor(for: weatherVM.iconName))
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, y: 3)
+                    .padding(.top, 8)
+                    .padding(.bottom, -4) // slight overlap into the temperature
+                
+                // Temperature text slightly overlapping the icon area
+                Text(temperatureText)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .padding(.top, 5)
+            }
+            .padding(.horizontal, 12)
         }
-        .padding(.horizontal, 12)
+        .buttonStyle(.plain)
     }
     
     private var temperatureText: String {
@@ -321,4 +326,3 @@ struct HomeView_Previews: PreviewProvider {
         }
     }
 }
-
