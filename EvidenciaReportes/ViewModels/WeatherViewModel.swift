@@ -12,6 +12,7 @@ class WeatherViewModel: ObservableObject {
     @Published var temp: Double = 0.0
     @Published var tempMin: Double = 0.0
     @Published var tempMax: Double = 0.0
+    @Published var feelsLike: Double = 0.0
     @Published var conditionText: String = "-"
     @Published var iconName: String = "sun.max.fill"
     
@@ -34,6 +35,7 @@ class WeatherViewModel: ObservableObject {
             temp = summary.temperature
             tempMin = summary.tempMin
             tempMax = summary.tempMax
+            feelsLike = summary.feelsLike
             conditionText = summary.description
             iconName = summary.symbolName
         } catch {
@@ -49,6 +51,7 @@ private struct WeatherSummary {
     let temperature: Double
     let tempMin: Double
     let tempMax: Double
+    let feelsLike: Double
     let description: String
     let symbolName: String
     
@@ -56,6 +59,7 @@ private struct WeatherSummary {
         temperature = response.main.temp
         tempMin = response.main.tempMin
         tempMax = response.main.tempMax
+        feelsLike = response.main.feelsLike
         description = response.weather.first?.description.capitalized ?? "-"
         symbolName = WeatherSummary.symbolName(for: response.weather.first?.main)
     }

@@ -66,7 +66,7 @@ struct EnvironmentDetailView: View {
             HStack(spacing: 12) {
                 metricBubble(title: "Mín.", value: "\(Int(weatherVM.tempMin.rounded()))°C")
                 metricBubble(title: "Máx.", value: "\(Int(weatherVM.tempMax.rounded()))°C")
-                metricBubble(title: "Sensación", value: temperatureText)
+                metricBubble(title: "Sensación", value: feelsLikeText)
             }
         }
         .foregroundColor(.white)
@@ -226,6 +226,13 @@ struct EnvironmentDetailView: View {
             return "--°C"
         }
         return "\(Int(weatherVM.temp.rounded()))°C"
+    }
+    
+    private var feelsLikeText: String {
+        if weatherVM.isLoading || weatherVM.errorMessage != nil {
+            return "--°C"
+        }
+        return "\(Int(weatherVM.feelsLike.rounded()))°C"
     }
     
     private var aqiValue: Int? {
