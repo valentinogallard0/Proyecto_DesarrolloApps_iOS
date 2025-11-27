@@ -13,6 +13,7 @@ class WeatherViewModel: ObservableObject {
     @Published var tempMin: Double = 0.0
     @Published var tempMax: Double = 0.0
     @Published var conditionText: String = "-"
+    @Published var iconName: String = "sun.max.fill"
     
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
@@ -34,6 +35,7 @@ class WeatherViewModel: ObservableObject {
             tempMin = summary.tempMin
             tempMax = summary.tempMax
             conditionText = summary.description
+            iconName = summary.symbolName
         } catch {
             errorMessage = "Error obteniendo datos del clima"
             print("Weather error: \(error)")
@@ -48,11 +50,26 @@ private struct WeatherSummary {
     let tempMin: Double
     let tempMax: Double
     let description: String
+    let symbolName: String
     
     init(response: WeatherResponse) {
         temperature = response.main.temp
         tempMin = response.main.tempMin
         tempMax = response.main.tempMax
         description = response.weather.first?.description.capitalized ?? "-"
+        symbolName = WeatherSummary.symbolName(for: response.weather.first?.main)
+    }
+    
+    private static func symbolName(for condition: String?) -> String {
+        guard let condition else { return "sun.max.fill" }
+        switch condition.lowercased() {
+        case "clouds": return "cloud.fill"
+        case "rain": return "cloud.rain.fill"
+        case "drizzle": return "cloud.drizzle.fill"
+        case "thunderstorm": return "cloud.bolt.rain.fill"
+        case "snow": return "cloud.snow.fill"
+        case "mist", "fog", "haze": return "cloud.fog.fill"
+        default: return "sun.max.fill"
+        }
     }
 }

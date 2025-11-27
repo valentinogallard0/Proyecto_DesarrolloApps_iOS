@@ -265,19 +265,35 @@ struct HomeView: View {
     }
     
     private var temperatureBadge: some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            Text(temperatureText)
-                .font(.headline.weight(.semibold))
-            Text(temperatureSubtitle)
-                .font(.caption)
-                .opacity(0.8)
+        ZStack {
+            // Soft glass-like background for the badge
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
+                )
+
+            VStack(spacing: 0) {
+                // Weather icon on top
+                Image(systemName: weatherVM.iconName)
+                    .font(.system(size: 34, weight: .regular))
+                    .foregroundStyle(iconColor(for: weatherVM.iconName))
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, y: 3)
+                    .padding(.top, 8)
+                    .padding(.bottom, -4) // slight overlap into the temperature
+
+                // Temperature text slightly overlapping the icon area
+                Text(temperatureText)
+                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .padding(.bottom, 8)
+            }
+            .padding(.horizontal, 12)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
+        .fixedSize()
+        .frame(width: 68, height: 64)
+        .shadow(color: Color.black.opacity(0.08), radius: 8, y: 4)
     }
     
     private var temperatureText: String {
@@ -298,6 +314,15 @@ struct HomeView: View {
         let condition = weatherVM.conditionText
         return condition == "-" ? "Clima" : condition
     }
+    
+    private func iconColor(for iconName: String) -> Color {
+        switch iconName {
+        case "sun.max.fill": return .yellow
+        case "cloud.fill", "cloud.drizzle.fill", "cloud.rain.fill", "cloud.snow.fill",
+             "cloud.fog.fill", "cloud.bolt.rain.fill": return .gray
+        default: return .blue
+        }
+    }
 }
 
 // MARK: - Preview
@@ -309,3 +334,4 @@ struct HomeView_Previews: PreviewProvider {
         }
     }
 }
+
