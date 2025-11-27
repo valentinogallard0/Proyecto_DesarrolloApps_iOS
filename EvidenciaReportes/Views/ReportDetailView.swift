@@ -6,6 +6,7 @@ import UIKit
 struct ReportDetailView: View {
     let report: Report
     @Environment(\.dismiss) private var dismiss
+    @State private var fullScreenImage: UIImage? = nil
 
     private var relativeDate: String {
         let df = RelativeDateTimeFormatter()
@@ -19,13 +20,24 @@ struct ReportDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     if let data = report.imageData, let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 220)
-                            .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        Button {
+                            fullScreenImage = uiImage
+                        } label: {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(alignment: .bottomTrailing) {
+                                    Label("Ver completa", systemImage: "arrow.up.left.and.arrow.down.right")
+                                        .font(.caption.bold())
+                                        .padding(.vertical, 6)
+                                        .padding(.horizontal, 10)
+                                        .background(.ultraThinMaterial, in: Capsule())
+                                        .padding(10)
+                                }
+                        }
+                        .buttonStyle(.plain)
                     }
                     if let coord = report.coordinate {
                         mapPreview(coord)
@@ -40,6 +52,14 @@ struct ReportDetailView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cerrar") { dismiss() }
                 }
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { fullScreenImage != nil },
+            set: { if !$0 { fullScreenImage = nil } }
+        )) {
+            if let image = fullScreenImage {
+                FullscreenReportImageView(image: image)
             }
         }
     }
@@ -118,6 +138,30 @@ struct ReportDetailView: View {
             MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: coord),
             MKLaunchOptionsMapSpanKey: NSValue(mkCoordinateSpan: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
         ])
+    }
+}
+
+private struct FullscreenReportImageView: View {
+    let image: UIImage
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.opacity(0.95).ignoresSafeArea()
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .padding()
+                    .ignoresSafeArea()
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cerrar") { dismiss() }
+                        .foregroundColor(.white)
+                }
+            }
+        }
     }
 }
 

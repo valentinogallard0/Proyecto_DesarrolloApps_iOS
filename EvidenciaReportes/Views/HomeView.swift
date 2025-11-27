@@ -13,6 +13,8 @@ import MapKit
 struct HomeView: View {
     @EnvironmentObject private var store: ReportsStore
     @StateObject private var vm = HomeViewModel()
+    @StateObject private var airQualityVM = AirQualityViewModel()
+    @StateObject private var weatherVM = WeatherViewModel()
     @State private var selectedType: ReportType? = nil
     @State private var goToMap = false
     @State private var showAllReportsSheet = false
@@ -58,6 +60,10 @@ struct HomeView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
+            .task {
+                await airQualityVM.loadForMonterrey()
+                await weatherVM.loadWeather()
+            }
         }
     }
     
@@ -70,12 +76,11 @@ struct HomeView: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(alignment: .top) {
                 Label("Monterrey, NL", systemImage: "mappin.and.ellipse")
                     .font(.title.weight(.heavy))
-                    
                 Spacer()
-
+                temperatureBadge
             }
             Text("Reporta. Participa. Respira mejor.")
                 .font(.subheadline)
@@ -84,47 +89,64 @@ struct HomeView: View {
     }
     
     private var aqiCard: some View {
-        Group {
-            if let aqi = vm.aqi {
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle().fill(aqi.color.opacity(0.15))
-                        Text("\(aqi.aqi)")
-                            .font(.title2).bold()
-                            .foregroundStyle(aqi.color)
-                    }
-                    .frame(width: 64, height: 64)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Calidad del aire")
-                            .font(.headline)
-                        HStack {
-                            Text(aqi.label).bold().foregroundStyle(aqi.color)
-                            Text("•")
-                            Text(aqi.advice).foregroundStyle(.secondary)
-                        }
-                        .font(.subheadline)
+        let gradient = aqiGradient(for: airQualityValue)
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Calidad del aire")
+                        .font(.headline)
+                        .textCase(.uppercase)
+                        .opacity(0.85)
+                    Text(airQualityVM.aqiLevel == "-" ? "Sin datos" : airQualityVM.aqiLevel)
+                        .font(.title3.weight(.semibold))
+                }
+                Spacer()
+                Image(systemName: "aqi.low")
+                    .font(.system(size: 30, weight: .bold))
+                    .opacity(0.85)
+            }
+            
+            if airQualityVM.isLoading {
+                ProgressView("Actualizando datos…")
+                    .tint(.white)
+            } else if let error = airQualityVM.errorMessage {
+                Text(error)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.leading)
+            } else {
+                HStack(alignment: .lastTextBaseline, spacing: 10) {
+                    Text(airQualityVM.aqiNumber == "-" ? "--" : airQualityVM.aqiNumber)
+                        .font(.system(size: 44, weight: .heavy, design: .rounded))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Índice AQI")
+                            .font(.caption)
+                            .opacity(0.8)
+                        Text("Monterrey Centro")
+                            .font(.footnote)
+                            .opacity(0.8)
                     }
                     Spacer()
-                    Button {
-                        // Acción: ver detalle AQI
-                    } label: {
-                        Image(systemName: "chevron.right")
+                    Spacer()
+                    if let value = airQualityValue {
+                        metricChip(text: "Nivel \(value)/5")
                     }
-                    .buttonStyle(.plain)
                 }
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(.background)
-                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-                )
-            } else {
-                ProgressView("Obteniendo calidad del aire…")
-                    .frame(maxWidth: .infinity)
-                    .padding()
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 18)
+        .background(
+            gradient
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+        )
+        .foregroundColor(.white)
+        .shadow(color: Color.black.opacity(0.12), radius: 10, y: 6)
     }
     
     private var quickActions: some View {
@@ -202,6 +224,95 @@ struct HomeView: View {
                     .buttonStyle(.plain)
                 }
             }
+        }
+    }
+    
+    private var airQualityValue: Int? {
+        guard let value = Int(airQualityVM.aqiNumber) else { return nil }
+        return value
+    }
+    
+    private func aqiGradient(for value: Int?) -> LinearGradient {
+        let colors: [Color]
+        if let value, (1...5).contains(value) {
+            let ratio = Double(value - 1) / 4.0
+            let hue = max(0, 0.33 - (0.33 * ratio))
+            let start = Color(hue: hue, saturation: 0.55, brightness: 0.9)
+            let end = Color(hue: hue, saturation: 0.85, brightness: 0.7)
+            colors = [start, end]
+        } else {
+            colors = [
+                Color.gray.opacity(0.35),
+                Color.gray.opacity(0.55)
+            ]
+        }
+        
+        return LinearGradient(
+            colors: colors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private func metricChip(text: String) -> some View {
+        Text(text)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 12)
+            .background(Color.white.opacity(0.18))
+            .clipShape(Capsule(style: .continuous))
+    }
+    
+    private var temperatureBadge: some View {
+        NavigationLink {
+            EnvironmentDetailView(weatherVM: weatherVM, airQualityVM: airQualityVM)
+        } label: {
+            VStack(spacing: 0) {
+                // Weather icon on top
+                Image(systemName: weatherVM.iconName)
+                    .font(.system(size: 34, weight: .regular))
+                    .foregroundStyle(iconColor(for: weatherVM.iconName))
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, y: 3)
+                    .padding(.top, 8)
+                    .padding(.bottom, -4) // slight overlap into the temperature
+                
+                // Temperature text slightly overlapping the icon area
+                Text(temperatureText)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .padding(.top, 5)
+            }
+            .padding(.horizontal, 12)
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var temperatureText: String {
+        if weatherVM.isLoading || weatherVM.errorMessage != nil {
+            return "--°C"
+        }
+        let value = Int(weatherVM.temp.rounded())
+        return "\(value)°C"
+    }
+    
+    private var temperatureSubtitle: String {
+        if weatherVM.isLoading {
+            return "Actualizando..."
+        }
+        if weatherVM.errorMessage != nil {
+            return "Sin datos"
+        }
+        let condition = weatherVM.conditionText
+        return condition == "-" ? "Clima" : condition
+    }
+    
+    private func iconColor(for iconName: String) -> Color {
+        switch iconName {
+        case "sun.max.fill": return .yellow
+        case "cloud.fill", "cloud.drizzle.fill", "cloud.rain.fill", "cloud.snow.fill",
+             "cloud.fog.fill", "cloud.bolt.rain.fill": return .gray
+        default: return .blue
         }
     }
 }
