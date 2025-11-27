@@ -14,6 +14,7 @@ struct HomeView: View {
     @EnvironmentObject private var store: ReportsStore
     @StateObject private var vm = HomeViewModel()
     @StateObject private var airQualityVM = AirQualityViewModel()
+    @StateObject private var weatherVM = WeatherViewModel()
     @State private var selectedType: ReportType? = nil
     @State private var goToMap = false
     @State private var showAllReportsSheet = false
@@ -61,6 +62,7 @@ struct HomeView: View {
             }
             .task {
                 await airQualityVM.loadForMonterrey()
+                await weatherVM.loadWeather()
             }
         }
     }
@@ -74,12 +76,11 @@ struct HomeView: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(alignment: .top) {
                 Label("Monterrey, NL", systemImage: "mappin.and.ellipse")
                     .font(.title.weight(.heavy))
-                    
                 Spacer()
-
+                temperatureBadge
             }
             Text("Reporta. Participa. Respira mejor.")
                 .font(.subheadline)
@@ -261,6 +262,41 @@ struct HomeView: View {
             .padding(.horizontal, 12)
             .background(Color.white.opacity(0.18))
             .clipShape(Capsule(style: .continuous))
+    }
+    
+    private var temperatureBadge: some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            Text(temperatureText)
+                .font(.headline.weight(.semibold))
+            Text(temperatureSubtitle)
+                .font(.caption)
+                .opacity(0.8)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+    
+    private var temperatureText: String {
+        if weatherVM.isLoading || weatherVM.errorMessage != nil {
+            return "--°C"
+        }
+        let value = Int(weatherVM.temp.rounded())
+        return "\(value)°C"
+    }
+    
+    private var temperatureSubtitle: String {
+        if weatherVM.isLoading {
+            return "Actualizando..."
+        }
+        if weatherVM.errorMessage != nil {
+            return "Sin datos"
+        }
+        let condition = weatherVM.conditionText
+        return condition == "-" ? "Clima" : condition
     }
 }
 
