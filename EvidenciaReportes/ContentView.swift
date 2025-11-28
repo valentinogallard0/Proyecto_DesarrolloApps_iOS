@@ -25,7 +25,7 @@ struct ContentView: View {
                 NavigationStack { AutoridadesView() }
                     .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
 
-                NavigationStack { Text("Perfil (próximamente)") }
+                NavigationStack { ProfileView() }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
             }
         }
