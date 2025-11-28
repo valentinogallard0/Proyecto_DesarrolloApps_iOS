@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject private var store: ReportsStore
+    @State private var showReportsSheet = false
+    @State private var selectedReport: Report?
+    
     private let badges = [
         ("checkmark.seal.fill", "Colaborador", Color.green),
         ("star.fill", "Top 5 reportes", Color.yellow),
@@ -19,6 +23,7 @@ struct ProfileView: View {
             VStack(spacing: 24) {
                 header
                 stats
+                recentReportsSection
                 badgesSection
                 actions
             }
@@ -27,6 +32,14 @@ struct ProfileView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Perfil")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showReportsSheet) {
+            AllReportsSheet(reports: store.reports)
+        }
+        .sheet(item: $selectedReport) { report in
+            ReportDetailView(report: report)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
     }
     
     private var header: some View {
@@ -56,9 +69,9 @@ struct ProfileView: View {
     
     private var stats: some View {
         HStack(spacing: 16) {
-            statTile(value: "12", label: "Reportes")
-            statTile(value: "4", label: "Resueltos")
-            statTile(value: "86%", label: "Impacto")
+            statTile(value: "\(totalReports)", label: "Reportes")
+            statTile(value: "\(resolvedReports)", label: "Resueltos")
+            statTile(value: resolutionRateText, label: "Impacto")
         }
     }
     
@@ -77,6 +90,49 @@ struct ProfileView: View {
                 .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.05), radius: 4, y: 3)
         )
+    }
+    
+    private var recentReportsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Últimos reportes")
+                    .font(.headline)
+                Spacer()
+                if !store.reports.isEmpty {
+                    Button("Ver todo") { showReportsSheet = true }
+                        .font(.subheadline)
+                }
+            }
+            
+            if recentReports.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "tray")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                    Text("Aún no has creado reportes")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.03), radius: 4, y: 2)
+                )
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(recentReports) { report in
+                        Button {
+                            selectedReport = report
+                        } label: {
+                            ReportCardView(report: report, showStatus: true, showDate: true)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
     }
     
     private var badgesSection: some View {
@@ -105,16 +161,36 @@ struct ProfileView: View {
     
     private var actions: some View {
         VStack(spacing: 12) {
-            Button(action: {}) {
+            Button(action: { showReportsSheet = true }) {
                 Label("Ver mis reportes", systemImage: "doc.text.magnifyingglass")
             }
             .buttonStyle(ProfileButtonStyle(themeColor: .blue))
             
-            Button(action: {}) {
-                Label("Editar información", systemImage: "pencil")
+            NavigationLink {
+                ProfileSettingsView()
+            } label: {
+                Label("Preferencias", systemImage: "slider.horizontal.3")
             }
             .buttonStyle(ProfileButtonStyle(themeColor: .gray))
         }
+    }
+    
+    private var totalReports: Int {
+        store.reports.count
+    }
+    
+    private var resolvedReports: Int {
+        store.reports.filter { $0.status == .resolved }.count
+    }
+    
+    private var resolutionRateText: String {
+        guard totalReports > 0 else { return "0%" }
+        let rate = Double(resolvedReports) / Double(totalReports)
+        return "\(Int(rate * 100))%"
+    }
+    
+    private var recentReports: [Report] {
+        Array(store.reports.sorted(by: { $0.date > $1.date }).prefix(3))
     }
 }
 
@@ -136,5 +212,6 @@ private struct ProfileButtonStyle: ButtonStyle {
 #Preview {
     NavigationStack {
         ProfileView()
+            .environmentObject(ReportsStore())
     }
 }
