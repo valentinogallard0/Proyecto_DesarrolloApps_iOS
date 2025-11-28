@@ -30,10 +30,12 @@ struct MapReportsView: View {
     @State private var selectedCluster: ReportCluster? = nil
     @State private var selectedType: ReportType? = nil
     @State private var clusters: [ReportCluster] = []
+    @State private var clusterUpdateWorkItem: DispatchWorkItem?
     
     private let minDelta: CLLocationDegrees = 0.002
     private let maxDelta: CLLocationDegrees = 1.5
     private let zoomFactor: Double = 0.6 // cuanto acerca/aleja por toque
+    private let clusterUpdateDelay: TimeInterval = 0.18
     
     private func zoom(_ inwards: Bool) {
         let factor = inwards ? zoomFactor : (1/zoomFactor)
@@ -114,6 +116,16 @@ struct MapReportsView: View {
     
     private func updateClusters() {
         clusters = makeClusters(from: filteredReports, in: region)
+    }
+    
+    private func scheduleClusterUpdate() {
+        clusterUpdateWorkItem?.cancel()
+        let workItem = DispatchWorkItem {
+            updateClusters()
+            clusterUpdateWorkItem = nil
+        }
+        clusterUpdateWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + clusterUpdateDelay, execute: workItem)
     }
     
     var body: some View {
@@ -212,13 +224,13 @@ struct MapReportsView: View {
             updateClusters()
         }
         .onChange(of: region.center) { _ in
-            updateClusters()
+            scheduleClusterUpdate()
         }
         .onChange(of: region.span.latitudeDelta) { _ in
-            updateClusters()
+            scheduleClusterUpdate()
         }
         .onChange(of: region.span.longitudeDelta) { _ in
-            updateClusters()
+            scheduleClusterUpdate()
         }
         .onChange(of: reports) { _ in
             updateClusters()
