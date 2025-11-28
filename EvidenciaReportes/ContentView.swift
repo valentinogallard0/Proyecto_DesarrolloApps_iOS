@@ -22,8 +22,10 @@ struct ContentView: View {
                 NavigationStack { MapReportsView(reports: $store.reports)}
                     .tabItem { Label("Mapa", systemImage: "map") }
 
-                NavigationStack { AutoridadesView() }
-                    .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
+                /*
+                 NavigationStack { AutoridadesView() }
+                     .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
+                 */
 
                 NavigationStack { Text("Perfil (próximamente)") }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }

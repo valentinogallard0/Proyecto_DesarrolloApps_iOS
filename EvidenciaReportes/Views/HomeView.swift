@@ -236,9 +236,12 @@ struct HomeView: View {
         let colors: [Color]
         if let value, (1...5).contains(value) {
             let ratio = Double(value - 1) / 4.0
-            let hue = max(0, 0.33 - (0.33 * ratio))
-            let start = Color(hue: hue, saturation: 0.55, brightness: 0.9)
-            let end = Color(hue: hue, saturation: 0.85, brightness: 0.7)
+            let hue = max(0, 0.38 - (0.32 * ratio))
+            let saturation = 0.35 + (0.25 * ratio)
+            let startBrightness = 0.72 - (0.08 * ratio)
+            let endBrightness = max(0.45, startBrightness - 0.12)
+            let start = Color(hue: hue, saturation: saturation * 0.8, brightness: startBrightness)
+            let end = Color(hue: hue, saturation: saturation, brightness: endBrightness)
             colors = [start, end]
         } else {
             colors = [
