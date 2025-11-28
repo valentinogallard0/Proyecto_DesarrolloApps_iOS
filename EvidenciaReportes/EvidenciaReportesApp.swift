@@ -10,11 +10,13 @@ import SwiftUI
 @main
 struct EvidenciaReportesApp: App {
     @StateObject private var reportsStore = ReportsStore()
+    @StateObject private var locationManager = LocationManager()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(reportsStore)
+                .environmentObject(locationManager)
         }
     }
 }

@@ -10,10 +10,15 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var store: ReportsStore
     @State private var showingSplash = true
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     var body: some View {
         if showingSplash {
             SplashView(isActive: $showingSplash)
+        } else if !hasCompletedOnboarding {
+            OnboardingView {
+                hasCompletedOnboarding = true
+            }
         } else {
             TabView {
                 NavigationStack { HomeView() }
