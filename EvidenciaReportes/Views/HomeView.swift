@@ -12,7 +12,7 @@ import MapKit
 // MARK: - Main Screen
 struct HomeView: View {
     @EnvironmentObject private var store: ReportsStore
-    @StateObject private var vm = HomeViewModel()
+    @EnvironmentObject private var locationManager: LocationManager
     @StateObject private var airQualityVM = AirQualityViewModel()
     @StateObject private var weatherVM = WeatherViewModel()
     @State private var selectedType: ReportType? = nil
@@ -47,8 +47,7 @@ struct HomeView: View {
                 ToolbarItem(placement: .principal) { titleBar }
             }
             .sheet(item: $selectedType, onDismiss: { selectedType = nil }) { type in
-                let center = vm.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
-                AddReportView(center: center, initialType: type) { newReport in
+                AddReportView(center: currentCenter, initialType: type) { newReport in
                     store.add(newReport)
                 }
             }
@@ -185,12 +184,10 @@ struct HomeView: View {
             Text("Cerca de ti")
                 .font(.headline)
             
-            let center = vm.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
-            
             NavigationLink(isActive: $goToMap) {
                 MapReportsView(reports: $store.reports)
             } label: {
-                MiniMapView(center: center, reports: store.reports) {
+                MiniMapView(center: currentCenter, reports: store.reports) {
                     goToMap = true
                 }
             }
@@ -225,6 +222,10 @@ struct HomeView: View {
                 }
             }
         }
+    }
+    
+    private var currentCenter: CLLocationCoordinate2D {
+        locationManager.userLocation ?? CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161)
     }
     
     private var airQualityValue: Int? {

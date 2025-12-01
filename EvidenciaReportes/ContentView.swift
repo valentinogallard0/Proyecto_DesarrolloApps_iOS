@@ -10,10 +10,15 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var store: ReportsStore
     @State private var showingSplash = true
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     
     var body: some View {
         if showingSplash {
             SplashView(isActive: $showingSplash)
+        } else if !hasCompletedOnboarding {
+            OnboardingView {
+                hasCompletedOnboarding = true
+            }
         } else {
             TabView {
                 NavigationStack { HomeView() }
@@ -27,7 +32,7 @@ struct ContentView: View {
                      .tabItem { Label("Autoridades", systemImage: "shield.lefthalf.filled") }
                  */
 
-                NavigationStack { Text("Perfil (próximamente)") }
+                NavigationStack { ProfileView() }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
             }
         }

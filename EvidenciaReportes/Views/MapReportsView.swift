@@ -18,6 +18,7 @@ struct ReportCluster: Identifiable {
 struct MapReportsView: View {
     @Binding var reports: [Report]
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var locationManager: LocationManager
 
     // Región inicial (Monterrey)
     @State private var region = MKCoordinateRegion(
@@ -31,6 +32,7 @@ struct MapReportsView: View {
     @State private var selectedType: ReportType? = nil
     @State private var clusters: [ReportCluster] = []
     @State private var clusterUpdateWorkItem: DispatchWorkItem?
+    @State private var didCenterOnUser = false
     
     private let minDelta: CLLocationDegrees = 0.002
     private let maxDelta: CLLocationDegrees = 1.5
@@ -128,6 +130,15 @@ struct MapReportsView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + clusterUpdateDelay, execute: workItem)
     }
     
+    private func centerOnUserIfNeeded(with coordinate: CLLocationCoordinate2D?) {
+        guard let coordinate else { return }
+        guard !didCenterOnUser else { return }
+        didCenterOnUser = true
+        withAnimation {
+            region.center = coordinate
+        }
+    }
+    
     var body: some View {
         ZStack {
             Map(coordinateRegion: $region,
@@ -222,6 +233,7 @@ struct MapReportsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             updateClusters()
+            centerOnUserIfNeeded(with: locationManager.userLocation)
         }
         .onChange(of: region.center) { _ in
             scheduleClusterUpdate()
@@ -237,6 +249,9 @@ struct MapReportsView: View {
         }
         .onChange(of: selectedType) { _ in
             updateClusters()
+        }
+        .onChange(of: locationManager.userLocation) { coordinate in
+            centerOnUserIfNeeded(with: coordinate)
         }
         .sheet(isPresented: $showAdd) {
             AddReportView(center: region.center) { newReport in
