@@ -139,6 +139,16 @@ struct MapReportsView: View {
         }
     }
     
+    private func centerOnUserLocation() {
+        if let coordinate = locationManager.userLocation {
+            withAnimation {
+                region.center = coordinate
+            }
+        } else {
+            locationManager.requestPermissionIfNeeded()
+        }
+    }
+    
     var body: some View {
         ZStack {
             Map(coordinateRegion: $region,
@@ -206,22 +216,29 @@ struct MapReportsView: View {
                 HStack {
                     Spacer()
                     VStack(spacing: 10) {
+                        Button(action: centerOnUserLocation) {
+                            Image(systemName: "location.fill")
+                                .foregroundStyle(Color.accentColor)
+                                .padding(12)
+                        }
+                        .background(.thinMaterial, in: Circle())
+
                         Button(action: { showAdd = true }) {
                             Image(systemName: "plus")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         Button(action: { zoom(true) }) {
                             Image(systemName: "plus.magnifyingglass")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         
                         Button(action: { zoom(false) }) {
                             Image(systemName: "minus.magnifyingglass")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())

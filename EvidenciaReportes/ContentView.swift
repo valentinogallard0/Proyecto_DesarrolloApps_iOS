@@ -11,6 +11,7 @@ struct ContentView: View {
     @EnvironmentObject var store: ReportsStore
     @State private var showingSplash = true
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var selectedTab: Tab = .home
     
     var body: some View {
         if showingSplash {
@@ -20,12 +21,14 @@ struct ContentView: View {
                 hasCompletedOnboarding = true
             }
         } else {
-            TabView {
-                NavigationStack { HomeView() }
+            TabView(selection: $selectedTab) {
+                NavigationStack { HomeView(openMapScreen: { selectedTab = .map }) }
                     .tabItem { Label("Inicio", systemImage: "house.fill") }
+                    .tag(Tab.home)
                 
                 NavigationStack { MapReportsView(reports: $store.reports)}
                     .tabItem { Label("Mapa", systemImage: "map") }
+                    .tag(Tab.map)
 
                 /*
                  NavigationStack { AutoridadesView() }
@@ -34,8 +37,17 @@ struct ContentView: View {
 
                 NavigationStack { ProfileView() }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+                    .tag(Tab.profile)
             }
         }
+    }
+}
+
+extension ContentView {
+    enum Tab: Hashable {
+        case home
+        case map
+        case profile
     }
 }
 

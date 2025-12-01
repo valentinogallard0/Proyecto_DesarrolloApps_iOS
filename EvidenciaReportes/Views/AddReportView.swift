@@ -14,6 +14,7 @@ struct AddReportView: View {
     let center: CLLocationCoordinate2D
     var onSave: (Report) -> Void
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var locationManager: LocationManager
     
     @State private var type: ReportType = .pothole
     @State private var titleText: String = ""
@@ -206,6 +207,15 @@ struct AddReportView: View {
                                 .buttonStyle(.plain)
                                 .padding(8)
                             }
+                            .overlay(alignment: .bottomTrailing) {
+                                Button(action: centerOnUserLocation) {
+                                    Image(systemName: "location.fill")
+                                        .foregroundStyle(Color.accentColor)
+                                        .padding(10)
+                                }
+                                .background(.thinMaterial, in: Circle())
+                                .padding(12)
+                            }
                         }
                         
                         if selectedCoordinate == nil {
@@ -294,6 +304,7 @@ struct AddReportView: View {
                 }
             }
             .onAppear {
+                locationManager.requestPermissionIfNeeded()
                 search.updateRegion(region)
             }
             .onChange(of: region.center) { _ in
@@ -332,6 +343,15 @@ struct AddReportView: View {
                                 .padding(10)
                                 .background(.ultraThinMaterial, in: Capsule())
                                 .padding()
+                        }
+                        .overlay(alignment: .bottomTrailing) {
+                            Button(action: centerOnUserLocation) {
+                                Image(systemName: "location.fill")
+                                    .foregroundStyle(Color.accentColor)
+                                    .padding(12)
+                            }
+                            .background(.thinMaterial, in: Circle())
+                            .padding()
                         }
                     }
                     .toolbar {
@@ -397,6 +417,16 @@ struct AddReportView: View {
             selectedCoordinate = coordinate
         }
         return true
+    }
+    
+    private func centerOnUserLocation() {
+        if let coordinate = locationManager.userLocation {
+            withAnimation {
+                region.center = coordinate
+            }
+        } else {
+            locationManager.requestPermissionIfNeeded()
+        }
     }
 }
 

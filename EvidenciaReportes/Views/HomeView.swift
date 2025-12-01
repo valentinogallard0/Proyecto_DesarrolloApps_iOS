@@ -11,6 +11,7 @@ import MapKit
 
 // MARK: - Main Screen
 struct HomeView: View {
+    var openMapScreen: (() -> Void)? = nil
     @EnvironmentObject private var store: ReportsStore
     @EnvironmentObject private var locationManager: LocationManager
     @StateObject private var airQualityVM = AirQualityViewModel()
@@ -188,7 +189,11 @@ struct HomeView: View {
                 MapReportsView(reports: $store.reports)
             } label: {
                 MiniMapView(center: currentCenter, reports: store.reports, userLocation: locationManager.userLocation) {
-                    goToMap = true
+                    if let openMapScreen {
+                        openMapScreen()
+                    } else {
+                        goToMap = true
+                    }
                 }
             }
             .buttonStyle(.plain)
