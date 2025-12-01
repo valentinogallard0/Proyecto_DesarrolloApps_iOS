@@ -26,7 +26,7 @@ struct ContentView: View {
                     .tabItem { Label("Inicio", systemImage: "house.fill") }
                     .tag(Tab.home)
                 
-                NavigationStack { MapReportsView(reports: $store.reports)}
+                NavigationStack { MapReportsView() }
                     .tabItem { Label("Mapa", systemImage: "map") }
                     .tag(Tab.map)
 
@@ -53,5 +53,7 @@ extension ContentView {
 
 
 #Preview {
-    ContentView().environmentObject(ReportsStore())
+    ContentView()
+        .environmentObject(ReportsStore(context: SwiftDataStack.shared.context))
+        .modelContainer(SwiftDataStack.shared.container)
 }

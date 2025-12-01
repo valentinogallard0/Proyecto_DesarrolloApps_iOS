@@ -224,6 +224,7 @@ private extension ProfileView {
 #Preview {
     NavigationStack {
         ProfileView()
-            .environmentObject(ReportsStore())
     }
+    .environmentObject(ReportsStore(context: SwiftDataStack.shared.context))
+    .modelContainer(SwiftDataStack.shared.container)
 }

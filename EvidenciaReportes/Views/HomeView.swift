@@ -189,7 +189,7 @@ struct HomeView: View {
                 .font(.headline)
             
             NavigationLink(isActive: $goToMap) {
-                MapReportsView(reports: $store.reports)
+                MapReportsView()
             } label: {
                 MiniMapView(center: currentCenter, reports: store.reports, userLocation: locationManager.userLocation) {
                     if let openMapScreen {
@@ -336,7 +336,9 @@ struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             NavigationStack { HomeView() }
-                .environmentObject(ReportsStore())
+                .environmentObject(ReportsStore(context: SwiftDataStack.shared.context))
+                .environmentObject(LocationManager())
         }
+        .modelContainer(SwiftDataStack.shared.container)
     }
 }

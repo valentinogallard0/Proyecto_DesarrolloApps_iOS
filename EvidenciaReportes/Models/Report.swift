@@ -93,3 +93,23 @@ struct Report: Identifiable, Equatable, Codable {
         try container.encodeIfPresent(imageData, forKey: .imageData)
     }
 }
+
+extension Report {
+    init(record: ReportRecord) {
+        var coordinate: CLLocationCoordinate2D? = nil
+        if let latitude = record.latitude, let longitude = record.longitude {
+            coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        }
+        self.init(
+            id: record.id,
+            type: record.reportType,
+            title: record.title,
+            subtitle: record.subtitle,
+            date: record.date,
+            coordinate: coordinate,
+            address: record.address,
+            status: record.reportStatus,
+            imageData: record.imageData
+        )
+    }
+}
