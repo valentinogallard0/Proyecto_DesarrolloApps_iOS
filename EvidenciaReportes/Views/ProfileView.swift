@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var store: ReportsStore
+    @Environment(\.colorScheme) private var colorScheme
     @State private var showReportsSheet = false
     @State private var selectedReport: Report?
     
@@ -62,8 +63,8 @@ struct ProfileView: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 6)
+                .fill(.regularMaterial)
+                .shadow(color: largeCardShadow, radius: 8, y: 6)
         )
     }
     
@@ -87,8 +88,8 @@ struct ProfileView: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, y: 3)
+                .fill(.regularMaterial)
+                .shadow(color: smallCardShadow, radius: 4, y: 3)
         )
     }
     
@@ -117,8 +118,8 @@ struct ProfileView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.03), radius: 4, y: 2)
+                        .fill(.regularMaterial)
+                        .shadow(color: smallCardShadow, radius: 4, y: 2)
                 )
             } else {
                 VStack(spacing: 12) {
@@ -152,8 +153,8 @@ struct ProfileView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.04), radius: 4, y: 2)
+                        .fill(.regularMaterial)
+                        .shadow(color: smallCardShadow, radius: 4, y: 2)
                 )
             }
         }
@@ -203,9 +204,20 @@ private struct ProfileButtonStyle: ButtonStyle {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(themeColor.opacity(configuration.isPressed ? 0.2 : 0.15))
+                    .fill(themeColor.opacity(configuration.isPressed ? 0.22 : 0.18))
             )
-            .foregroundColor(themeColor)
+            .foregroundStyle(.primary)
+            .tint(themeColor)
+    }
+}
+
+private extension ProfileView {
+    var largeCardShadow: Color {
+        Color.black.opacity(colorScheme == .dark ? 0.45 : 0.08)
+    }
+    
+    var smallCardShadow: Color {
+        Color.black.opacity(colorScheme == .dark ? 0.35 : 0.05)
     }
 }
 

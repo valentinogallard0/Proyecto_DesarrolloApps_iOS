@@ -109,7 +109,7 @@ struct HomeView: View {
             
             if airQualityVM.isLoading {
                 ProgressView("Actualizando datos…")
-                    .tint(.white)
+                    .tint(.accentColor)
             } else if let error = airQualityVM.errorMessage {
                 Text(error)
                     .font(.subheadline)
@@ -138,14 +138,17 @@ struct HomeView: View {
         .padding(.vertical, 16)
         .padding(.horizontal, 18)
         .background(
-            gradient
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(gradient)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
+                .strokeBorder(gradient, lineWidth: 1.2)
         )
-        .foregroundColor(.white)
         .shadow(color: Color.black.opacity(0.12), radius: 10, y: 6)
     }
     
@@ -269,8 +272,10 @@ struct HomeView: View {
             .fontWeight(.semibold)
             .padding(.vertical, 6)
             .padding(.horizontal, 12)
-            .background(Color.white.opacity(0.18))
-            .clipShape(Capsule(style: .continuous))
+            .background(
+                Capsule(style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
     }
     
     private var temperatureBadge: some View {
