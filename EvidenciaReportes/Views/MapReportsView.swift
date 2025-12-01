@@ -16,7 +16,7 @@ struct ReportCluster: Identifiable {
 }
 
 struct MapReportsView: View {
-    @Binding var reports: [Report]
+    @EnvironmentObject private var store: ReportsStore
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var locationManager: LocationManager
 
@@ -46,12 +46,13 @@ struct MapReportsView: View {
         region.span = MKCoordinateSpan(latitudeDelta: newLat, longitudeDelta: newLon)
     }
     
+    private var reports: [Report] { store.reports }
+    
     private var filteredReports: [Report] {
         if let t = selectedType {
             return reports.filter { $0.type == t }
-        } else {
-            return reports
         }
+        return reports
     }
     
     private func makeClusters(from reports: [Report], in region: MKCoordinateRegion) -> [ReportCluster] {
@@ -139,6 +140,16 @@ struct MapReportsView: View {
         }
     }
     
+    private func centerOnUserLocation() {
+        if let coordinate = locationManager.userLocation {
+            withAnimation {
+                region.center = coordinate
+            }
+        } else {
+            locationManager.requestPermissionIfNeeded()
+        }
+    }
+    
     var body: some View {
         ZStack {
             Map(coordinateRegion: $region,
@@ -206,22 +217,29 @@ struct MapReportsView: View {
                 HStack {
                     Spacer()
                     VStack(spacing: 10) {
+                        Button(action: centerOnUserLocation) {
+                            Image(systemName: "location.fill")
+                                .foregroundStyle(Color.accentColor)
+                                .padding(12)
+                        }
+                        .background(.thinMaterial, in: Circle())
+
                         Button(action: { showAdd = true }) {
                             Image(systemName: "plus")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         Button(action: { zoom(true) }) {
                             Image(systemName: "plus.magnifyingglass")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
                         
                         Button(action: { zoom(false) }) {
                             Image(systemName: "minus.magnifyingglass")
-                                .foregroundColor(.black)
+                                .foregroundStyle(Color.accentColor)
                                 .padding(12)
                         }
                         .background(.thinMaterial, in: Circle())
@@ -244,7 +262,7 @@ struct MapReportsView: View {
         .onChange(of: region.span.longitudeDelta) { _ in
             scheduleClusterUpdate()
         }
-        .onChange(of: reports) { _ in
+        .onChange(of: store.reports) { _ in
             updateClusters()
         }
         .onChange(of: selectedType) { _ in
@@ -255,7 +273,7 @@ struct MapReportsView: View {
         }
         .sheet(isPresented: $showAdd) {
             AddReportView(center: region.center) { newReport in
-                reports.append(newReport)
+                store.add(newReport)
             }
         }
         .sheet(item: $selectedReport) { report in
@@ -374,8 +392,10 @@ private struct FilterChip: View {
 }
 
 #Preview {
-    let store = ReportsStore()
-    return NavigationStack {
-        MapReportsView(reports: .constant(store.reports))
+    NavigationStack {
+        MapReportsView()
     }
+    .environmentObject(ReportsStore(context: SwiftDataStack.shared.context))
+    .environmentObject(LocationManager())
+    .modelContainer(SwiftDataStack.shared.container)
 }

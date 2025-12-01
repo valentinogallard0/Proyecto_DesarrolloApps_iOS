@@ -183,5 +183,6 @@ struct AutoridadesView: View {
 
 #Preview {
     AutoridadesView()
-        .environmentObject(ReportsStore())
+        .environmentObject(ReportsStore(context: SwiftDataStack.shared.context))
+        .modelContainer(SwiftDataStack.shared.container)
 }

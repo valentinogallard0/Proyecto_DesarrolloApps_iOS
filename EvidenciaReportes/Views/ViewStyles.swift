@@ -9,7 +9,7 @@ extension View {
         self
             .background(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(.background)
+                    .fill(Color(.secondarySystemBackground))
                     .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: shadowYOffset)
             )
     }

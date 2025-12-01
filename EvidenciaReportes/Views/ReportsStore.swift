@@ -5,25 +5,21 @@
 //  Created by Assistant on 24/09/25.
 //
 
-import Foundation
 import CoreLocation
+import Foundation
+import SwiftData
 import SwiftUI
 
+@MainActor
 final class ReportsStore: ObservableObject {
-    @Published var reports: [Report] = [] {
-        didSet {
-            guard !skipSave else { return }
-            persistence.saveReports(reports)
-        }
-    }
+    @Published private(set) var reports: [Report] = []
     
-    private let persistence: ReportsPersistence
-    private var skipSave = false
+    private let context: ModelContext
     
     private static let sampleReports: [Report] = [
         Report(type: .pothole, title: "Bache grande", subtitle: "Av. Constitución #123",
                date: .now.addingTimeInterval(-3600),
-               coordinate: CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161), status: .inProgress ),
+               coordinate: CLLocationCoordinate2D(latitude: 25.6866, longitude: -100.3161), status: .inProgress),
         Report(type: .streetlight, title: "Luminaria fundida", subtitle: "Parque Fundidora",
                date: .now.addingTimeInterval(-7200),
                coordinate: CLLocationCoordinate2D(latitude: 25.675, longitude: -100.285), status: .new),
@@ -32,23 +28,51 @@ final class ReportsStore: ObservableObject {
                coordinate: CLLocationCoordinate2D(latitude: 25.671, longitude: -100.309), status: .resolved)
     ]
     
-    init(persistence: ReportsPersistence = ReportsPersistence()) {
-        self.persistence = persistence
-        let storedReports = persistence.loadReports()
-        skipSave = true
-        if storedReports.isEmpty {
-            reports = Self.sampleReports
-        } else {
-            reports = storedReports
-        }
-        skipSave = false
-        
-        if storedReports.isEmpty {
-            persistence.saveReports(reports)
-        }
+    init(context: ModelContext) {
+        self.context = context
+        loadReports()
     }
     
     func add(_ report: Report) {
-        reports.append(report)
+        context.insert(ReportRecord(report: report))
+        saveContext()
+        reports.insert(report, at: 0)
+    }
+    
+    func reload() {
+        loadReports()
+    }
+    
+    private func loadReports() {
+        let descriptor = FetchDescriptor<ReportRecord>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        
+        do {
+            var records = try context.fetch(descriptor)
+            if records.isEmpty {
+                seedInitialData()
+                records = try context.fetch(descriptor)
+            }
+            reports = records.map(Report.init(record:))
+        } catch {
+            print("⚠️ Error al cargar reportes con SwiftData: \(error)")
+            reports = []
+        }
+    }
+    
+    private func seedInitialData() {
+        for report in Self.sampleReports {
+            context.insert(ReportRecord(report: report))
+        }
+        saveContext()
+    }
+    
+    private func saveContext() {
+        do {
+            try context.save()
+        } catch {
+            print("⚠️ Error al guardar cambios en SwiftData: \(error)")
+        }
     }
 }
