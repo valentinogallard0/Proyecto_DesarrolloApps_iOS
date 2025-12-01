@@ -187,7 +187,7 @@ struct HomeView: View {
             NavigationLink(isActive: $goToMap) {
                 MapReportsView(reports: $store.reports)
             } label: {
-                MiniMapView(center: currentCenter, reports: store.reports) {
+                MiniMapView(center: currentCenter, reports: store.reports, userLocation: locationManager.userLocation) {
                     goToMap = true
                 }
             }

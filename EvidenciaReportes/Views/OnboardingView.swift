@@ -34,7 +34,7 @@ struct OnboardingView: View {
                             .frame(width: 120, height: 120)
                             .background(
                                 Circle()
-                                    .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .fill(gradient(for: slide))
                             )
                         Text(slide.title)
                             .font(.title2.weight(.semibold))
@@ -171,6 +171,27 @@ struct OnboardingView: View {
         case .requesting: return .orange
         case .idle: return .secondary
         }
+    }
+}
+
+private func gradient(for slide: OnboardingSlide) -> LinearGradient {
+    LinearGradient(
+        colors: gradientColors(for: slide),
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+}
+
+private func gradientColors(for slide: OnboardingSlide) -> [Color] {
+    switch slide.title {
+    case "Reporta incidentes":
+        return [.red, .orange]
+    case "Visualiza en el mapa":
+        return [.blue, .cyan]
+    case "Respira informado":
+        return [.green, .teal]
+    default:
+        return [.blue, .purple]
     }
 }
 
